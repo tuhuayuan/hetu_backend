@@ -271,5 +271,6 @@ tags
 dump.rdb
 
 ### Project template
-
+deploy/prometheus/include
+deploy/supervisor/include
 .pytest_cache/

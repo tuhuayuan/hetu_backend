@@ -44,10 +44,4 @@ groups:
     for: 0s
     labels:
       severity: warning
-- name: 设定温度'
-  rules:
-  - alert: 设定温度过低预警
-    annotations: {}
-    expr: ''
-    for: 10s
-    labels: {}
+
