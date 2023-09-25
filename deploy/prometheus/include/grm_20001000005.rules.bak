@@ -1,0 +1,48 @@
+groups:
+- name: 系统开启
+  rules:
+  - alert: 系统开启开关预警
+    expr: grm_20001000005_gauge{name='系统开启'} == 1
+    for: 5s
+    labels:
+      severity: info
+    annotations:
+      module_id: 200010000005
+      var_name: 系统开启
+      description: 开关打开后触发
+      alert_level: info
+      alert_type: binary_state
+      state: 1
+      duration: 5s
+
+- name: 冷库温度
+  rules:
+  - alert: 冷库温度预警
+    expr: grm_20001000005_gauge{name='冷库温度'} > -17.0
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      module_id: 200010000005
+      var_name: 冷库温度
+      description: 监测冷库温度是否超标
+      alert_level: critical
+      alert_type: hight_limit
+      threshold: -17.0
+      duration: 30s
+
+- name: 设定温度
+  rules:
+  - alert: 设定温度过低预警
+    expr: grm_20001000005_gauge{name='设定温度'} < 2
+    for: 0s
+    labels:
+      severity: warning
+    annotations:
+      module_id: 200010000005
+      var_name: 设定温度
+      description: 设定温度过低
+      alert_level: warning
+      alert_type: hight_limit
+      threshold: 2
+      duration: 0s
