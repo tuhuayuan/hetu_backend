@@ -53,6 +53,17 @@ services:
     networks:
       - my_network
 
+  alertmanager:
+    image: prom/alertmanager:v0.25.1
+    ports:
+      - 9093:9093
+    command: 
+      --config.file=/etc/alertmanager/alertmanager.yml
+    volumes:
+      - ./deploy/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    networks:
+      - my_network
+
 networks:
   my_network:
 

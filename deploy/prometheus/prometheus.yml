@@ -25,5 +25,10 @@ scrape_configs:
       - targets: ['host.docker.internal:9091']
     honor_labels: true
 
+alerting:
+  alertmanagers:
+      - static_configs:
+          - targets: ['host.docker.internal:9093']
+
 rule_files:
   - '/etc/prometheus/include/grm_*.rules'

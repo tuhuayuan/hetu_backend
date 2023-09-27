@@ -1,0 +1,18 @@
+global:
+  resolve_timeout: 5m
+  http_config:
+    follow_redirects: true
+
+route:
+  receiver: alert_api
+  group_by: ['module_id', 'var_name', 'alertname']
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 5m
+
+receivers:
+  - name: alert_api
+    webhook_configs:
+      - send_resolved: true
+        url: http://host.docker.internal:8000/api/alert/notify
+        max_alerts: 0

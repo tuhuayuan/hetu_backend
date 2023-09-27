@@ -20,11 +20,13 @@ from ninja import NinjaAPI
 from apps.grm.views import router as grm_router
 from apps.exporter.views import router as exporter_router
 from apps.alert.views import router as alert_router
+from apps.auth.views import router as auth_router
 
 api = NinjaAPI(title='养殖污水智慧运营平台')
 api.add_router('grm/', grm_router)
 api.add_router('exporter/', exporter_router)
 api.add_router('alert/', alert_router)
+api.add_router('auth/', auth_router)
 
 
 urlpatterns = [

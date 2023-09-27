@@ -1,11 +1,11 @@
+
 import logging
 import random
 import signal
 import sys
-from wsgiref.simple_server import make_server
 
 import click
-from prometheus_client import CollectorRegistry, make_wsgi_app, start_wsgi_server
+from prometheus_client import CollectorRegistry, start_wsgi_server
 from prometheus_client.core import GaugeMetricFamily
 
 from utils.grm.client import GrmClient
@@ -56,7 +56,6 @@ def cli(random_port, host, advertise, module_id, module_secret, module_url):
     registry = CollectorRegistry()
     registry.register(collector)
 
-    app = make_wsgi_app(registry=registry)
     start_port = random_port
     end_port = random_port + 1000
     for _ in range(0, 3):
