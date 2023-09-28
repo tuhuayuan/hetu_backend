@@ -4,7 +4,7 @@ https://django-ninja.rest-framework.com/guides/response/pagination/#creating-cus
 """
 
 from functools import partial, wraps
-from typing import Any, Callable, Tuple, Optional
+from typing import Any, Callable, Optional, Tuple
 
 from django.conf import settings
 from django.db.models import QuerySet
@@ -21,16 +21,18 @@ from utils.schema.base import BaseSchemaOut
 class BasePagination:
     """基础的分页器"""
 
-    items_attribute = 'items'
+    items_attribute = "items"
     InputSource = Query(...)
 
     class Input(Schema):
         """分页请求参数"""
+
         limit: int = Field(settings.PAGINATION_PER_PAGE, ge=1)
         offset: int = Field(0, ge=0)
 
     class Output(Schema):
         """分页数据"""
+
         items: list[Any]
         count: int
 
@@ -38,7 +40,7 @@ class BasePagination:
         offset = pagination.offset
         limit: int = pagination.limit
         return {
-            "items": queryset[offset: offset + limit],
+            "items": queryset[offset : offset + limit],
             "count": self._items_count(queryset),
         }
 
@@ -64,22 +66,20 @@ def _inject_pagination(func: Callable) -> Callable:
         pagination_params = kwargs.pop("base_pagination")
 
         # 执行被封装的View，items是一个collection
-        try:        
+        try:
             items = func(*args, **kwargs)
 
             # 执行实际的分页逻辑
-            result = paginator.paginate_queryset(
-                items, pagination=pagination_params
-            )
+            result = paginator.paginate_queryset(items, pagination=pagination_params)
             result[paginator.items_attribute] = list(result[paginator.items_attribute])
-    
-            return BaseSchemaOut(status='success', data=result)
+
+            return BaseSchemaOut(status="success", data=result)
         except HttpError as e:
-            return BaseSchemaOut(status='error', data=None, error=str(e))
+            return BaseSchemaOut(status="error", data=None, error=str(e))
         except Exception as e:
             # 输出错误日志
             print(e)
-            return BaseSchemaOut(status='error', data=None, error='未处理异常')
+            return BaseSchemaOut(status="error", data=None, error="未处理异常")
 
     # 添加分页参数
     view_with_pagination._ninja_contribute_args = [  # type: ignore
@@ -124,10 +124,10 @@ def _make_response_paginated(paginator: BasePagination, op: Operation) -> None:
 
     # 动态申明一个新的BaseSchemaOut的子类
     new_base_schema = type(
-        new_item_name + 'Out',
+        new_item_name + "Out",
         (BaseSchemaOut,),
         {
-            "__annotations__": {'data': Optional[new_item_schema]},  # type: ignore
+            "__annotations__": {"data": Optional[new_item_schema]},  # type: ignore
         },
     )  # typing: ignore
 

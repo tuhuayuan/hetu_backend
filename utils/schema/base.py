@@ -11,15 +11,15 @@ from ninja.signature.details import is_collection_type
 
 class BaseSchemaOut(Schema):
     """API响应基础类"""
-    
+
     # success或者error
     status: str
     # 错误也可能包含数据
     data: Any
     # 如果是error则包含错误内容
-    error: str = ''
+    error: str = ""
     # 错误类型
-    error_type: str = ''
+    error_type: str = ""
 
 
 def api_schema(func_view) -> Callable:
@@ -34,13 +34,13 @@ def _inject_api_schema(func: Callable) -> Callable:
     @wraps(func)
     def api_view(*args: tuple[Any], **kwargs: Any) -> Any:
         try:
-            return BaseSchemaOut(status='success', data=func(*args, **kwargs))
+            return BaseSchemaOut(status="success", data=func(*args, **kwargs))
         except HttpError as e:
-            return BaseSchemaOut(status='error', data=None, error=str(e))
+            return BaseSchemaOut(status="error", data=None, error=str(e))
         except Exception as e:
             # 输出错误日志
             print(e)
-            return BaseSchemaOut(status='error', data=None, error='未处理异常')
+            return BaseSchemaOut(status="error", data=None, error="未处理异常")
 
     # 修改响应类型
     api_view._ninja_contribute_to_operation = partial(_make_api_schema)
@@ -50,7 +50,7 @@ def _inject_api_schema(func: Callable) -> Callable:
 
 def _make_api_schema(op: Operation) -> None:
     """动态构建正确的API返回类型"""
-    
+
     item_schema = None
 
     for code, resp_model in op.response_models.items():
@@ -59,12 +59,12 @@ def _make_api_schema(op: Operation) -> None:
 
         item_schema = resp_model.__annotations__["response"]
         break
-    
+
     if not resp_model:
         raise ConfigError(
             f'"{op.view_func}" has no response (e.g. response=SomeSchema)'
-        )        
-    
+        )
+
     if is_collection_type(item_schema):
         naming_schema = get_collection_args(item_schema)[0]
         data_schema = list[naming_schema]
@@ -76,16 +76,17 @@ def _make_api_schema(op: Operation) -> None:
     try:
         new_schema_name = f"{naming_schema.__name__}Out"
     except AttributeError:
-        new_schema_name = f"{str(naming_schema).replace('.', '_')}Out"  # typing.Any case
+        new_schema_name = (
+            f"{str(naming_schema).replace('.', '_')}Out"  # typing.Any case
+        )
 
     # 动态申明一个新的BaseSchemaOut的子类
-  
 
     new_schema = type(
         new_schema_name,
         (BaseSchemaOut,),
         {
-            "__annotations__": {'data': Optional[data_schema]},  # type: ignore
+            "__annotations__": {"data": Optional[data_schema]},  # type: ignore
         },
     )  # typing: ignore
 
