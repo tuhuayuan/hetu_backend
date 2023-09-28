@@ -16,7 +16,7 @@ class GrmModule(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f'Module: {self.name}'
+        return f"Module: {self.name}"
 
 
 class GrmModuleVar(models.Model):
@@ -31,17 +31,19 @@ class GrmModuleVar(models.Model):
     # 是否本地变量
     local = models.BooleanField(default=False)
     # 变量自定义描述
-    details = models.CharField(default='', max_length=200)
+    details = models.CharField(default="", max_length=200)
 
     # 所属模块
-    module = models.ForeignKey(GrmModule, 
-                               to_field='module_id',
-                               db_column='module_id', 
-                               related_name='vars',
-                               on_delete=models.CASCADE)
+    module = models.ForeignKey(
+        GrmModule,
+        to_field="module_id",
+        db_column="module_id",
+        related_name="vars",
+        on_delete=models.CASCADE,
+    )
 
     def __str__(self) -> str:
-        return f'Module: {self.module.name}, Var: {self.name}'
-    
+        return f"Module: {self.module.name}, Var: {self.name}"
+
     class Meta:
-        unique_together = ('name', 'module')
+        unique_together = ("name", "module")
