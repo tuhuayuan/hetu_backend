@@ -2,8 +2,8 @@ import configparser
 import fcntl
 import glob
 import os
-from string import Template
 import time
+from string import Template
 from xmlrpc.client import ServerProxy
 
 from django.conf import settings
@@ -70,62 +70,64 @@ def supervisor_update():
 
 def get_exporter_url(process_name: str) -> str:
     """解析日志里面的服务地址"""
-    
+
     log = rpc.supervisor.readProcessStdoutLog(process_name, 0, 1000)
-    advertise = ''
+    advertise = ""
     try:
         lines = log.splitlines()
-        
+
         for l in lines:
-            if l.startswith('# ADVERTISE'):
+            if l.startswith("# ADVERTISE"):
                 # 格式是这样的 # ADVERTISE 27.0.0.1:20986
-                advertise = l.split(' ')[2]
+                advertise = l.split(" ")[2]
                 raise EOFError()
-        return ''
+        return ""
     except:
         return advertise
 
-    
-@router.get('/', response=list[ModuleExporter])
+
+@router.get("/", response=list[ModuleExporter])
 @api_paginate
 def list_exporter(request):
-    file_list = glob.glob(settings.SUPERVISOR_EXPORT_DIR + '/exporter_*.conf')
+    file_list = glob.glob(settings.SUPERVISOR_EXPORT_DIR + "/exporter_*.conf")
     exporter_list: list[ModuleExporter] = []
 
     for path in file_list:
         # 获取配置文件
         config = configparser.ConfigParser()
         config.read(path)
-        process_name = config.sections()[0].split(':')[1]
+        process_name = config.sections()[0].split(":")[1]
 
-        exporter = ModuleExporter(name=config.get('module', 'name'),
-                                  module_id=config.get('module', 'module_id'),
-                                  module_secret=config.get('module', 'module_secret'),
-                                  module_url=config.get('module', 'module_url'),
-                                  interval=config.get('module', 'export_interval'),
-                                  timeout=config.get('module', 'export_timeout'))
+        exporter = ModuleExporter(
+            name=config.get("module", "name"),
+            module_id=config.get("module", "module_id"),
+            module_secret=config.get("module", "module_secret"),
+            module_url=config.get("module", "module_url"),
+            interval=config.get("module", "export_interval"),
+            timeout=config.get("module", "export_timeout"),
+        )
 
         # 获取运行状态
         info = rpc.supervisor.getProcessInfo(process_name)
-        exporter.running = info['statename'] == 'RUNNING'
+        exporter.running = info["statename"] == "RUNNING"
 
         # 获取运行地址
         if exporter.running:
             exporter.exporter_url = get_exporter_url(process_name)
-        
+
         # 压入列表
         exporter_list.append(exporter)
 
     return exporter_list
 
 
-@router.post('/', response=ModuleExporter)
+@router.post("/", response=ModuleExporter)
 @api_schema
 def create_exporter(request, data: CreateModuleExporter):
     """创建数据收集器"""
 
-    process_name = f'exporter_{data.module_id}'
-    file_path = f'{settings.SUPERVISOR_EXPORT_DIR}/{process_name}.conf'
+    process_name = f"exporter_{data.module_id}"
+    file_path = f"{settings.SUPERVISOR_EXPORT_DIR}/{process_name}.conf"
 
     # 配置文件内容
     content = supervisor_tpl.substitute(
@@ -139,11 +141,12 @@ def create_exporter(request, data: CreateModuleExporter):
         command=settings.SUPERVISOR_EXPORT_COMMAND,
         host=settings.SUPERVISOR_EXPORT_HOST,
         port=settings.SUPERVISOR_EXPORT_PORT,
-        advertise=settings.SUPERVISOR_EXPORT_ADVERTISE)
+        advertise=settings.SUPERVISOR_EXPORT_ADVERTISE,
+    )
     # 创建配置文件
     if not os.path.exists(file_path):
         # 获得文件锁
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             try:
                 fcntl.flock(file, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 # 在这里进行其他进程不能创建文件的操作
@@ -152,13 +155,13 @@ def create_exporter(request, data: CreateModuleExporter):
                 # 释放文件锁
                 fcntl.flock(file, fcntl.LOCK_UN)
     else:
-        raise HttpError(409, '已经存在')
+        raise HttpError(409, "已经存在")
 
     # Update
     try:
         supervisor_update()
     except:
-        raise HttpError(503, '配置没有生效')
+        raise HttpError(503, "配置没有生效")
 
     # 创建返回对象
     resp = ModuleExporter(**data.dict())
@@ -166,18 +169,18 @@ def create_exporter(request, data: CreateModuleExporter):
     return resp
 
 
-@router.post('/{module_id}', response=ModuleExporter)
+@router.post("/{module_id}", response=ModuleExporter)
 @api_schema
 def update_exporter(request, module_id: str, data: UpdateModuleExporter):
     """更新接口，包含启动和停止"""
 
-    process_name = f'exporter_{module_id}'
-    file_path = f'{settings.SUPERVISOR_EXPORT_DIR}/exporter_{module_id}.conf'
+    process_name = f"exporter_{module_id}"
+    file_path = f"{settings.SUPERVISOR_EXPORT_DIR}/exporter_{module_id}.conf"
 
     # 加载配置文件
     if os.path.exists(file_path):
         # 修改配置
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             try:
                 # 获得文件锁
                 fcntl.flock(file, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -194,10 +197,11 @@ def update_exporter(request, module_id: str, data: UpdateModuleExporter):
                     command=settings.SUPERVISOR_EXPORT_COMMAND,
                     host=settings.SUPERVISOR_EXPORT_HOST,
                     port=settings.SUPERVISOR_EXPORT_PORT,
-                    advertise=settings.SUPERVISOR_EXPORT_ADVERTISE)
+                    advertise=settings.SUPERVISOR_EXPORT_ADVERTISE,
+                )
                 file.write(content)
             except Exception as e:
-                raise HttpError(500, '更新配置失败: ' + str(e))
+                raise HttpError(500, "更新配置失败: " + str(e))
             finally:
                 # 释放文件锁
                 fcntl.flock(file, fcntl.LOCK_UN)
@@ -206,27 +210,27 @@ def update_exporter(request, module_id: str, data: UpdateModuleExporter):
         try:
             supervisor_update()
         except:
-            raise HttpError(500, '配置没有生效')
+            raise HttpError(500, "配置没有生效")
 
         # 更新运行状态
         try:
             info = rpc.supervisor.getProcessInfo(process_name)
-            running = info['statename'] == 'RUNNING'
-            exporter_url = ''
-           
+            running = info["statename"] == "RUNNING"
+            exporter_url = ""
+
             if data.running and running:
                 # 获取服务地址
                 exporter_url = get_exporter_url(process_name)
 
             if data.running and not running:
                 # 删除日志
-                os.remove(info['stdout_logfile'])
+                os.remove(info["stdout_logfile"])
 
                 # 启动服务
                 result = rpc.supervisor.startProcessGroup(process_name, True)
 
-                if result and result[0]['description'] != 'OK':
-                    raise Exception('启动服务错误: ' + str(result[0]['description']))
+                if result and result[0]["description"] != "OK":
+                    raise Exception("启动服务错误: " + str(result[0]["description"]))
 
                 # 获取服务地址
                 for _ in range(0, 3):
@@ -234,33 +238,32 @@ def update_exporter(request, module_id: str, data: UpdateModuleExporter):
 
                     if not exporter_url:
                         result = rpc.supervisor.getProcessInfo(process_name)
-             
-                        if result['statename'] == 'RUNNING':
+
+                        if result["statename"] == "RUNNING":
                             time.sleep(1)
                         else:
                             break
-                
+
             if not data.running and running:
                 # 停止服务
                 result = rpc.supervisor.stopProcessGroup(process_name)
-                if result and result[0]['description'] != 'OK':
-                    raise Exception('停止服务错误: ' + str(result[0]['description']))
-                
+                if result and result[0]["description"] != "OK":
+                    raise Exception("停止服务错误: " + str(result[0]["description"]))
 
         except:
-            raise HttpError(500, '更新运行状态失败')
+            raise HttpError(500, "更新运行状态失败")
     else:
-        raise HttpError(404, '配置不存在')
+        raise HttpError(404, "配置不存在")
 
     resp = ModuleExporter(module_id=module_id, exporter_url=exporter_url, **data.dict())
     return resp
 
 
-@router.delete('/{module_id}', response=str)
+@router.delete("/{module_id}", response=str)
 @api_schema
 def delete_exporter(request, module_id):
     """删除接口"""
-    file_path = f'{settings.SUPERVISOR_EXPORT_DIR}/exporter_{module_id}.conf'
+    file_path = f"{settings.SUPERVISOR_EXPORT_DIR}/exporter_{module_id}.conf"
 
     # 加载配置文件
     if os.path.exists(file_path):
@@ -274,20 +277,20 @@ def delete_exporter(request, module_id):
         try:
             supervisor_update()
         except:
-            raise HttpError(500, '更新配置')
+            raise HttpError(500, "更新配置")
 
     else:
-        raise HttpError(404, '配置不存在')
+        raise HttpError(404, "配置不存在")
 
-    return 'OK'
+    return "OK"
 
 
-@router.get('/metrics/running')
+@router.get("/metrics/running")
 def service_discover(request):
     """实现Prometheus的HTTP SD接口
     https://prometheus.io/docs/prometheus/latest/http_sd/
     """
-    file_list = glob.glob(settings.SUPERVISOR_EXPORT_DIR + '/exporter_*.conf')
+    file_list = glob.glob(settings.SUPERVISOR_EXPORT_DIR + "/exporter_*.conf")
     resp = []
 
     for path in file_list:
@@ -296,21 +299,22 @@ def service_discover(request):
         config.read(path)
 
         # 进程名
-        process_name = config.sections()[0].split(':')[1]
+        process_name = config.sections()[0].split(":")[1]
 
         # 获取进程状态
         try:
             info = rpc.supervisor.getProcessInfo(process_name)
 
-            if info['statename'] == 'RUNNING':
-
+            if info["statename"] == "RUNNING":
                 # 加入服务发现
-                resp.append({
-                    'targets': [get_exporter_url(process_name)],
-                    "labels": {
-                        "__meta_inverval": "5s", 
+                resp.append(
+                    {
+                        "targets": [get_exporter_url(process_name)],
+                        "labels": {
+                            "__meta_inverval": "5s",
+                        },
                     }
-                })
+                )
         except:
             # 不需要处理错误
             continue

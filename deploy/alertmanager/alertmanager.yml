@@ -1,14 +1,13 @@
 global:
-  resolve_timeout: 5m
   http_config:
     follow_redirects: true
 
 route:
   receiver: alert_api
   group_by: ['module_id', 'var_name', 'alertname']
-  group_wait: 10s
-  group_interval: 30s
-  repeat_interval: 5m
+  group_wait: 5s
+  group_interval: 10s
+  repeat_interval: 30s
 
 receivers:
   - name: alert_api

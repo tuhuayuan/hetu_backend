@@ -13,6 +13,7 @@ setup(
         'click',
         'requests',
         'prometheus-client',
+        'python-dateutil',
     ],
     entry_points={
         'console_scripts': [

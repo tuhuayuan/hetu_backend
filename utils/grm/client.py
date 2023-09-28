@@ -11,22 +11,24 @@ class GrmError(Exception):
         self.code = code
 
     def __str__(self):
-        return f'grm error code: {self.code}, message: {self.message}'
+        return f"grm error code: {self.code}, message: {self.message}"
 
 
 class GrmClient:
     req_header = {
-        'Accept': '*/*',
-        'Connection': 'keep-alive',
-        'Content-Type': 'text/plain;charset=UTF-8',
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "Content-Type": "text/plain;charset=UTF-8",
     }
 
-    def __init__(self,
-                 module_id: str,
-                 module_secret: str,
-                 module_url: str,
-                 timeout=5,
-                 reconnect=True) -> None:
+    def __init__(
+        self,
+        module_id: str,
+        module_secret: str,
+        module_url: str,
+        timeout=5,
+        reconnect=True,
+    ) -> None:
         self._module_id = module_id
         self._module_secret = module_secret
         self._module_url = module_url
@@ -38,40 +40,47 @@ class GrmClient:
         """GRM数据获取接口"""
 
         token = self._module_token
-        url = f'http://{token.data_url}/exdata?SID={token.sid}&OP={op}'
+        url = f"http://{token.data_url}/exdata?SID={token.sid}&OP={op}"
 
-        resp = requests.post(url=url, headers=self.req_header,
-                             data=data.encode('utf-8'), timeout=self._timeout)
+        resp = requests.post(
+            url=url,
+            headers=self.req_header,
+            data=data.encode("utf-8"),
+            timeout=self._timeout,
+        )
         resp.raise_for_status()
-        results = resp.text.split('\r\n')
+        results = resp.text.split("\r\n")
 
-        if results[0] == 'OK':
+        if results[0] == "OK":
             return results[1:]
-        elif results[0] == 'ERROR':
+        elif results[0] == "ERROR":
             raise GrmError(int(results[1]), results[2])
         else:
-            raise GrmError(-1, '未知错误')
+            raise GrmError(-1, "未知错误")
 
     def _exlogon(self) -> ModuleToken:
         """GRM模块登录"""
 
-        data = f'GRM={self._module_id}\r\nPASS={self._module_secret}'
-        url = f'{self._module_url}/exlog'
+        data = f"GRM={self._module_id}\r\nPASS={self._module_secret}"
+        url = f"{self._module_url}/exlog"
 
-        resp = requests.post(url=url, headers=self.req_header,
-                             data=data, timeout=self._timeout)
+        resp = requests.post(
+            url=url, headers=self.req_header, data=data, timeout=self._timeout
+        )
         resp.raise_for_status()
-        results = resp.text.split('\r\n')
-        
-        if results[0] == 'OK':
-            self._module_token = ModuleToken(id=self._module_id,
-                                             sid=results[2].split('=')[1],
-                                             data_url=results[1].split('=')[1])
+        results = resp.text.split("\r\n")
+
+        if results[0] == "OK":
+            self._module_token = ModuleToken(
+                id=self._module_id,
+                sid=results[2].split("=")[1],
+                data_url=results[1].split("=")[1],
+            )
             return self._module_token
-        elif results[0] == 'ERROR':
+        elif results[0] == "ERROR":
             raise GrmError(int(results[1]), results[2])
         else:
-            raise GrmError(-1, '未知错误')
+            raise GrmError(-1, "未知错误")
 
     @property
     def token(self):
@@ -109,35 +118,42 @@ class GrmClient:
                         raise err
             result = fn(self, *args, **kwargs)
             return result
+
         return wrapper
 
     @_with_reconnect
     def enumerate(self) -> list[ModuleVar]:
         """枚举模块变量"""
 
-        lines = self._exdata('NTRP', 'E')
+        lines = self._exdata("NTRP", "E")
         n = int(lines[0])
         vars: list[ModuleVar] = []
 
-        for row in lines[1:n + 1]:
-            fields = row.split(',')
-            vars.append(ModuleVar(module_id=self._module_id, name=fields[0],
-                                  type=fields[1], rw=(fields[2] == 'W'),
-                                  priority=int(fields[3])))
+        for row in lines[1 : n + 1]:
+            fields = row.split(",")
+            vars.append(
+                ModuleVar(
+                    module_id=self._module_id,
+                    name=fields[0],
+                    type=fields[1],
+                    rw=(fields[2] == "W"),
+                    priority=int(fields[3]),
+                )
+            )
         return vars
 
     @_with_reconnect
     def read(self, vars: list[ModuleVar]) -> None:
         """读取列表中的变量值"""
 
-        data = f'{len(vars)}\r\n'
-        data = data + '\r\n'.join([v.name for v in vars])
+        data = f"{len(vars)}\r\n"
+        data = data + "\r\n".join([v.name for v in vars])
 
-        lines = self._exdata(data, 'R')
+        lines = self._exdata(data, "R")
         n = int(lines[0])
 
-        for var, row in zip(vars, lines[1:n + 1]):
-            if row.startswith('#ERROR#'):
+        for var, row in zip(vars, lines[1 : n + 1]):
+            if row.startswith("#ERROR#"):
                 # 给变量设置错误状态
                 var.read_error = int(row[6:])
             else:
@@ -146,29 +162,31 @@ class GrmClient:
 
     @_with_reconnect
     def write(self, vars: list[ModuleVar]) -> None:
-        """写入列表中变量的值 """
+        """写入列表中变量的值"""
 
-        data = f'{len(vars)}\r\n'
+        data = f"{len(vars)}\r\n"
         for v in vars:
-            data = data + v.name + f'\r\n{v.value}\r\n'
+            data = data + v.name + f"\r\n{v.value}\r\n"
 
-        lines = self._exdata(data, 'W')
+        lines = self._exdata(data, "W")
         n = int(lines[0])
 
-        for v, r in zip(vars, lines[1:n + 1]):
+        for v, r in zip(vars, lines[1 : n + 1]):
             v.write_error = int(r)
 
     @_with_reconnect
     def info(self) -> ModuleInfo:
         format_str = "%Y%m%d%H%M%S%f"  # 时间格式，包括毫秒部分
-        lines = self._exdata('', 'I')
+        lines = self._exdata("", "I")
 
-        return ModuleInfo(id=self._module_id,
-                          name=lines[0],
-                          desc=lines[1],
-                          logo=lines[2],
-                          logon_clients=int(lines[3]),
-                          status=int(lines[4]),
-                          logon_at=datetime.strptime(lines[5], format_str),
-                          last_activate=datetime.strptime(lines[6], format_str),
-                          logon_ip=lines[7])
+        return ModuleInfo(
+            id=self._module_id,
+            name=lines[0],
+            desc=lines[1],
+            logo=lines[2],
+            logon_clients=int(lines[3]),
+            status=int(lines[4]),
+            logon_at=datetime.strptime(lines[5], format_str),
+            last_activate=datetime.strptime(lines[6], format_str),
+            logon_ip=lines[7],
+        )
