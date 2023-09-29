@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'apps.grm',
     'apps.exporter',
     'apps.alert',
+    'apps.auth'
 ]
 
 # 安装的中间件

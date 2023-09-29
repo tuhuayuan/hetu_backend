@@ -18,7 +18,7 @@ class ModuleExporter(Schema):
     # 运行状态
     running: bool = False
     # 运行地址
-    exporter_url: str = ''
+    exporter_url: str = ""
 
 
 class CreateModuleExporter(Schema):

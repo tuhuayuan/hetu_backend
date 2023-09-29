@@ -59,7 +59,7 @@ class ReadValue(Schema):
     # 变量名
     name: str
     # 变量类型
-    type: str = ''
+    type: str = ""
     # 列表值
     values: list[Value] = []
     # 错误状态
@@ -77,11 +77,11 @@ class WriteValueIn(Schema):
 
 class WriteValueOut(Schema):
     """写模块变量响应参数"""
-    
+
     # 变量名
     name: str
     # 写入结果
-    error: int= 0
+    error: int = 0
 
 
 class GetModule(Schema):

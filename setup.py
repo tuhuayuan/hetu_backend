@@ -14,6 +14,8 @@ setup(
         'requests',
         'prometheus-client',
         'python-dateutil',
+        'pyjwt',
+        'captcha',
     ],
     entry_points={
         'console_scripts': [
