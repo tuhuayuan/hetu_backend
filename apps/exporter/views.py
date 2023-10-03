@@ -40,7 +40,7 @@ export_timeout=$timeout
 
 def supervisor_update():
     """实现supervisorctl的update命令
-    参考supervisorctl的源码实现，只是异常交给上层处理
+    参考supervisorctl的源码实现, 只是异常交给上层处理
     """
 
     result = rpc.supervisor.reloadConfig()
@@ -71,10 +71,10 @@ def supervisor_update():
 def get_exporter_url(process_name: str) -> str:
     """解析日志里面的服务地址"""
 
-    log = rpc.supervisor.readProcessStdoutLog(process_name, 0, 1000)
+    log = rpc.supervisor.tailProcessStdoutLog(process_name, 0, 255)[0]
     advertise = ""
     try:
-        lines = log.splitlines()
+        lines = log.splitlines()[::-1]
 
         for l in lines:
             if l.startswith("# ADVERTISE"):

@@ -19,55 +19,55 @@ APPS_DIR = BASE_DIR / "apps"
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # 密钥
-SECRET_KEY = 'django-insecure-6_i&z6g$*ngr*)ptwh29)use0g!$*ki&yerr8(1%1sv=kye_8i'
+SECRET_KEY = "django-insecure-6_i&z6g$*ngr*)ptwh29)use0g!$*ki&yerr8(1%1sv=kye_8i"
 
 # 调试模式
 DEBUG = True
 
 # 允许本地和Docker环境
-ALLOWED_HOSTS = ['host.docker.internal', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ["host.docker.internal", "localhost", "127.0.0.1"]
 
 # 安装的应用列表
 INSTALLED_APPS = [
-    'django.contrib.contenttypes',
-    'django.contrib.staticfiles',
-
-    'apps.grm',
-    'apps.exporter',
-    'apps.alert',
-    'apps.auth'
+    "django.contrib.contenttypes",
+    "django.contrib.staticfiles",
+    "casbin_adapter.apps.CasbinAdapterConfig",
+    "apps.grm",
+    "apps.exporter",
+    "apps.alert",
+    "apps.auth",
 ]
 
 # 安装的中间件
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 
 # 根路由
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = "config.urls"
 
 # 采用默认的模版配置
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # 使用pg13数据库
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'hetu',
-        'USER': 'hetu',
-        'PASSWORD': 'hetu',
-        'HOST': 'localhost',
-        'PORT': '5432',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "hetu",
+        "USER": "hetu",
+        "PASSWORD": "hetu",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -81,45 +81,53 @@ CACHES = {
 # 不使用国际化
 USE_I18N = False
 
-# 启用时区，并确保内部使用UTC
+# 启用时区
 USE_TZ = True
-TIME_ZONE = 'UTC'
+
+# 采用标准UTC
+TIME_ZONE = "UTC"
 
 # 静态文件
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 
 # 默认使用的自增ID类型
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# casbin模型配置
+CASBIN_MODEL = str(BASE_DIR / "apps/auth/casbin.conf")
+
+# 角色管理器
+# CASBIN_ROLE_MANAGER = RoleManager
 
 # API分页默认值
 PAGINATION_PER_PAGE = 20
 
 # Prometheus接口配置
-PROMETHEUS_URL = 'http://localhost:9090'
+PROMETHEUS_URL = "http://localhost:9090"
 
 # 推送地址
-PROMETHUES_PUSHGATEWAY = 'http://localhost:9091'
+PROMETHUES_PUSHGATEWAY = "http://localhost:9091"
 
 # Prometheus发现目录
-PROMETHEUS_RULES_DIR = str(BASE_DIR / 'deploy/prometheus/include')
+PROMETHEUS_RULES_DIR = str(BASE_DIR / "deploy/prometheus/include")
 
 # 规则检查命令
-PROMETHEUS_RULES_CHECKER = 'docker run --rm -it --entrypoint promtool -v $PWD/deploy:/test/rules prom/prometheus check rules'
+PROMETHEUS_RULES_CHECKER = "docker run --rm -it --entrypoint promtool -v $PWD/deploy:/test/rules prom/prometheus check rules"
 
 # supervisor接口地址
-SUPERVISOR_XMLRPC_URL = 'http://localhost:9001/RPC2'
+SUPERVISOR_XMLRPC_URL = "http://localhost:9001/RPC2"
 
 # Exporter命令
-SUPERVISOR_EXPORT_COMMAND = 'python -m apps.exporter.script.exporter'
+SUPERVISOR_EXPORT_COMMAND = "python -m apps.exporter.script.exporter"
 
 # Exporter起始端口
 SUPERVISOR_EXPORT_PORT = 20000
 
 # Exporter监听地址
-SUPERVISOR_EXPORT_HOST = '0.0.0.0'
+SUPERVISOR_EXPORT_HOST = "0.0.0.0"
 
 # Exporter访问地址
-SUPERVISOR_EXPORT_ADVERTISE = 'host.docker.internal'
+SUPERVISOR_EXPORT_ADVERTISE = "host.docker.internal"
 
 # supervisor任务配置目录
-SUPERVISOR_EXPORT_DIR = str(BASE_DIR / 'deploy/supervisor/include')
+SUPERVISOR_EXPORT_DIR = str(BASE_DIR / "deploy/supervisor/include")
