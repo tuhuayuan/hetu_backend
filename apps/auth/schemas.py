@@ -173,3 +173,54 @@ class LoginOut(Schema):
     refresh_token: str | None
     # 过期时间
     expires: datetime | None
+
+
+class DictTypeBase(Schema):
+    """字典类型基本字段"""
+
+    # 字典类型名称
+    name: str
+    # 字典类型代码
+    code: str
+    # 字典类型状态
+    status: int
+    # 备注
+    remark: str | None
+
+
+class DictTypeIn(DictTypeBase):
+    """创建字典类型请求"""
+
+    pass
+
+
+class DictTypeOut(DictTypeBase):
+    """返回DictType结构"""
+
+    id: int
+
+
+class DictDataBase(Schema):
+    """Dict数据结构"""
+
+    # 数据标签
+    label: str
+    # 数据值
+    value: str
+    # 数据状态 (1: 活动, 0: 非活动)
+    status: int
+    # 排序值
+    sort: int
+    # 备注信息
+    remark: str | None
+
+
+class DictDataIn(DictDataBase):
+    """请求DictData结构"""
+
+    pass
+
+class DictDataOut(DictDataBase):
+    """返回DictData结构"""
+
+    id: int

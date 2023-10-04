@@ -17,12 +17,16 @@ from ninja.errors import HttpError
 from ninja.security import HttpBearer
 
 from apps.auth.adapter import RoleManager
-from apps.auth.models import Department, Role, User
+from apps.auth.models import Department, DictData, DictType, Role, User
 from apps.auth.schemas import (
     CaptchaOut,
     DepartmentIn,
     DepartmentOut,
     DepartmentUpdateIn,
+    DictDataIn,
+    DictDataOut,
+    DictTypeIn,
+    DictTypeOut,
     LoginIn,
     LoginOut,
     RoleIn,
@@ -37,6 +41,7 @@ from utils.schema.base import api_schema
 from utils.schema.paginate import api_paginate
 
 enforcer.set_role_manager(RoleManager())
+enforcer.load_policy()
 
 router = Router()
 
@@ -380,3 +385,163 @@ class AuthBearer(HttpBearer):
 @api_schema
 def bearer(request):
     return request.auth
+
+
+@router.post(
+    "/dict/types",
+    response=DictTypeOut,
+    auth=AuthBearer([("api:auth:dict:types", "rw")]),
+)
+@api_schema
+def create_dicttype(request, payload: DictTypeIn):
+    """创建字典类型接口"""
+    try:
+        dt = DictType(**payload.dict())
+        dt.save()
+
+        return dt
+    except IntegrityError:
+        raise HttpError(400, "创建失败: code重复")
+
+
+@router.get(
+    "/dict/types",
+    response=list[DictTypeOut],
+    auth=AuthBearer([("api:auth:dict:types", "r")]),
+)
+@api_paginate
+def list_dicttype(request):
+    """字典类型列表接口"""
+    return DictType.objects.all()
+
+
+@router.get(
+    "/dict/types/{dicttype_id}",
+    response=DictTypeOut,
+    auth=AuthBearer([("api:auth:dict:types", "r")]),
+)
+@api_schema
+def get_dicttype(request, dicttype_id: int):
+    """字典类型接口"""
+    try:
+        dt = get_object_or_404(DictType, id=dicttype_id)
+        return dt
+    except:
+        raise HttpError(404, "字典类型不存在")
+
+
+@router.post(
+    "/dict/types/{dicttype_id}",
+    response=DictTypeOut,
+    auth=AuthBearer([("api:auth:dict:types", "rw")]),
+)
+@api_schema
+def update_dicttype(request, dicttype_id: int, payload: DictTypeIn):
+    """字典类型更新信息接口"""
+    try:
+        dt = get_object_or_404(DictType, id=dicttype_id)
+        dt.name = payload.name
+        dt.code = payload.code
+        dt.status = payload.status
+        dt.remark = payload.remark
+
+        dt.save()
+        return dt
+    except IntegrityError:
+        raise HttpError(400, "字典Code重复")
+    except:
+        raise HttpError(404, "字典类型不存在")
+
+
+@router.delete(
+    "/dict/types/{dicttype_id}",
+    response=str,
+    auth=AuthBearer([("api:auth:dict:types", "rw")]),
+)
+@api_schema
+def delete_dicttype(request, dicttype_id: int):
+    """字典类型删除接口"""
+    try:
+        dt = get_object_or_404(DictType, id=dicttype_id)
+        dt.delete()
+        return "OK"
+    except:
+        raise HttpError(404, "字典类型不存在")
+
+
+@router.post(
+    "/dict/data/{dicttype_id}",
+    response=DictDataOut,
+    auth=AuthBearer([("api:auth:dict:data", "rw")]),
+)
+@api_schema
+def create_dictdata(request, dicttype_id: int, payload: DictDataIn):
+    """字典数据创建"""
+    try:
+        dd = DictData(**payload.dict())
+        dd.dict_type_id = dicttype_id
+        dd.save()
+
+        return dd
+    except IntegrityError as err:
+        raise HttpError(400, f"创建失败: {str(err)}")
+
+
+@router.get(
+    "/dict/data/{dicttype_id}",
+    response=list[DictDataOut],
+    auth=AuthBearer([("api:auth:dict:data", "r")]),
+)
+@api_paginate
+def list_dictdata(request, dicttype_id: int):
+    """字典数据列表"""
+    return DictData.objects.filter(dict_type_id=dicttype_id).all()
+
+
+@router.get(
+    "/dict/data/{dicttype_id}/{dictdata_id}",
+    response=DictDataOut,
+    auth=AuthBearer([("api:auth:dict:data", "r")]),
+)
+@api_schema
+def get_dictdata(request, dicttype_id: int, dictdata_id: int):
+    """字典数据信息"""
+    dd = DictData.objects.filter(id=dictdata_id, dict_type_id=dicttype_id).first()
+    if not dd:
+        raise HttpError(404, "字典数据不存在")
+    return dd
+
+
+@router.post(
+    "/dict/data/{dicttype_id}/{dictdata_id}",
+    response=DictDataOut,
+    auth=AuthBearer([("api:auth:dict:data", "rw")]),
+)
+@api_schema
+def update_dictdata(request, dicttype_id: int, dictdata_id: int, payload: DictDataIn):
+    """字典数据信息更新"""
+    dd = DictData.objects.filter(id=dictdata_id, dict_type_id=dicttype_id).first()
+    if not dd:
+        raise HttpError(404, "字典数据不存在")
+    dd.label = payload.label
+    dd.value = payload.value
+    dd.status = payload.status
+    dd.sort = payload.sort
+    dd.remark = payload.remark
+
+    dd.save()
+    return dd
+
+
+@router.delete( 
+    "/dict/data/{dicttype_id}/{dictdata_id}",
+    response=str,
+    auth=AuthBearer([("api:auth:dict:data", "rw")]),
+)
+@api_schema
+def delete_dictdata(request, dicttype_id: int, dictdata_id: int):
+    dd = DictData.objects.filter(id=dictdata_id, dict_type_id=dicttype_id).first()
+    if not dd:
+        raise HttpError(404, "字典数据不存在")
+    dd.delete()
+    return 'OK'

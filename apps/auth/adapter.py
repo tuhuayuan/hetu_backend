@@ -22,7 +22,6 @@ class RoleManager(RM):
 
     def has_link(self, name1, name2, *domain):
         """判断username是否属于rolename的角色"""
-        
         if name1 == name2:
             return True
 

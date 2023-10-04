@@ -80,20 +80,26 @@ class DictType(models.Model):
     # 字典类型名称
     name = models.CharField(max_length=255)
     # 字典类型代码
-    code = models.CharField(max_length=255)
+    code = models.CharField(max_length=255, unique=True)
     # 字典类型状态
     status = models.IntegerField()
+    # 备注
+    remark = models.CharField(max_length=255, null=True)
 
 
 class DictData(models.Model):
     """字典数据模型"""
 
-    # 字典数据名称
+    # 字典数据名
     label = models.CharField(max_length=255)
     # 字典数据值
     value = models.CharField(max_length=255)
     # 字典数据状态
     status = models.IntegerField()
+    # 排序
+    sort = models.IntegerField()
+    # 描述
+    remark = models.CharField(max_length=255, null=True)
     # 外键，关联到字典类型
     dict_type = models.ForeignKey(DictType, on_delete=models.CASCADE)
 
