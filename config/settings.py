@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     "apps.grm",
     "apps.exporter",
     "apps.alert",
-    "apps.auth",
+    "apps.sys",
 ]
 
 # 安装的中间件
@@ -93,11 +93,8 @@ STATIC_URL = "static/"
 # 默认使用的自增ID类型
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# casbin模型配置
-CASBIN_MODEL = str(BASE_DIR / "apps/auth/casbin.conf")
-
-# 角色管理器
-# CASBIN_ROLE_MANAGER = RoleManager
+# Casbin模型配置
+CASBIN_MODEL = str(BASE_DIR / "apps/sys/casbin.conf")
 
 # API分页默认值
 PAGINATION_PER_PAGE = 20

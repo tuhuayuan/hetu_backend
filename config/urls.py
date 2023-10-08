@@ -20,13 +20,16 @@ from ninja import NinjaAPI
 from apps.grm.views import router as grm_router
 from apps.exporter.views import router as exporter_router
 from apps.alert.views import router as alert_router
-from apps.auth.views import router as auth_router
+from apps.sys.view import router as sys_router
+from utils.schema.errors import set_default_exc_handlers
 
-api = NinjaAPI(title='养殖污水智慧运营平台')
+api = NinjaAPI(title='养殖污水智慧运营平台', version='v1')
+set_default_exc_handlers(api)
+
 api.add_router('grm/', grm_router)
 api.add_router('exporter/', exporter_router)
 api.add_router('alert/', alert_router)
-api.add_router('auth/', auth_router)
+api.add_router('sys/', sys_router)
 
 
 urlpatterns = [

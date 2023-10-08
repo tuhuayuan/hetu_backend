@@ -66,21 +66,13 @@ def _inject_pagination(func: Callable) -> Callable:
         pagination_params = kwargs.pop("base_pagination")
 
         # 执行被封装的View，items是一个collection
-        try:
-            items = func(*args, **kwargs)
+        items = func(*args, **kwargs)
 
-            # 执行实际的分页逻辑
-            result = paginator.paginate_queryset(items, pagination=pagination_params)
-            result[paginator.items_attribute] = list(result[paginator.items_attribute])
-
-            return BaseSchemaOut(status="success", data=result)
-        except HttpError as e:
-            return BaseSchemaOut(status="error", data=None, error=str(e))
-        except Exception as e:
-            # 输出错误日志
-            print(e)
-            return BaseSchemaOut(status="error", data=None, error="未处理异常")
-
+        # 执行实际的分页逻辑
+        result = paginator.paginate_queryset(items, pagination=pagination_params)
+        result[paginator.items_attribute] = list(result[paginator.items_attribute])
+        return BaseSchemaOut(status="success", data=result)
+    
     # 添加分页参数
     view_with_pagination._ninja_contribute_args = [  # type: ignore
         (

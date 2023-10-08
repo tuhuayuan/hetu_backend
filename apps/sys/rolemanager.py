@@ -2,7 +2,7 @@ import logging
 
 from casbin.rbac import RoleManager as RM
 
-from apps.auth.models import Role, User
+from apps.sys.models import Role, User
 
 
 class RoleManager(RM):
@@ -24,7 +24,7 @@ class RoleManager(RM):
         """判断username是否属于rolename的角色"""
         if name1 == name2:
             return True
-
+        
         u = User.objects.filter(username=name1).first()
         if not u:
             return False

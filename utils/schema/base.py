@@ -33,14 +33,7 @@ def api_schema(func_view) -> Callable:
 def _inject_api_schema(func: Callable) -> Callable:
     @wraps(func)
     def api_view(*args: tuple[Any], **kwargs: Any) -> Any:
-        try:
-            return BaseSchemaOut(status="success", data=func(*args, **kwargs))
-        except HttpError as e:
-            return BaseSchemaOut(status="error", data=None, error=str(e))
-        except Exception as e:
-            # 输出错误日志
-            print(e)
-            return BaseSchemaOut(status="error", data=None, error="未处理异常")
+        return BaseSchemaOut(status="success", data=func(*args, **kwargs))
 
     # 修改响应类型
     api_view._ninja_contribute_to_operation = partial(_make_api_schema)

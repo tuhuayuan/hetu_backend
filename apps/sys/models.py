@@ -18,16 +18,6 @@ class Role(models.Model):
     update_time = models.DateTimeField(auto_now=True)
 
 
-class RoleMenuId(models.Model):
-    """角色菜单"""
-
-    # 菜单ID
-    menu_id = models.IntegerField()
-
-    # 角色
-    role = models.ForeignKey(Role, on_delete=models.CASCADE)
-
-
 class Department(models.Model):
     """部门模型"""
 
@@ -39,6 +29,8 @@ class Department(models.Model):
     create_time = models.DateTimeField()
     # 部门状态
     status = models.IntegerField()
+    # 上级部门
+    parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.name
@@ -54,9 +46,9 @@ class User(models.Model):
     # 昵称
     nickname = models.CharField(max_length=255)
     # 手机号
-    mobile = models.CharField(max_length=20)
+    mobile = models.CharField(max_length=20, null=True)
     # 性别标签
-    gender_label = models.CharField(max_length=10)
+    gender_label = models.CharField(max_length=10, null=True)
     # 头像链接
     avatar = models.URLField(max_length=255, null=True)
     # 电子邮件
@@ -64,7 +56,7 @@ class User(models.Model):
     # 用户状态
     status = models.IntegerField(default=1)
     # 部门外键
-    dept = models.ForeignKey(Department, on_delete=models.CASCADE)
+    dept = models.ForeignKey(Department, on_delete=models.PROTECT)
     # 角色外键
     roles = models.ManyToManyField(Role)
     # 创建时间
@@ -91,7 +83,7 @@ class DictData(models.Model):
     """字典数据模型"""
 
     # 字典数据名
-    label = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
     # 字典数据值
     value = models.CharField(max_length=255)
     # 字典数据状态
@@ -100,26 +92,43 @@ class DictData(models.Model):
     sort = models.IntegerField()
     # 描述
     remark = models.CharField(max_length=255, null=True)
-    # 外键，关联到字典类型
-    dict_type = models.ForeignKey(DictType, on_delete=models.CASCADE)
+    # 字典类型码
+    type_code = models.CharField(max_length=255)
 
 
-class Route(models.Model):
-    """菜单路由模型"""
+class Menu(models.Model):
+    """系统菜单模型"""
 
-    # 路由名称
+    # 上级菜单（自关联外键，如果没有上级菜单，则为顶级菜单）
+    parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True)
+    # 菜单项名称
     name = models.CharField(max_length=255)
-    # 路由路径
-    path = models.CharField(max_length=255)
-    # 路由组件
-    component = models.CharField(max_length=255)
-    # 菜单标题
-    title = models.CharField(max_length=100)
-    # 菜单图标
-    icon = models.CharField(max_length=100)
-    # 是否隐藏菜单
-    hidden = models.BooleanField(default=False)
-    # 是否保持活跃状态
-    keep_alive = models.BooleanField(default=True)
-    # 角色外键
-    role = models.ManyToManyField(Role)
+    # 菜单项类型（可选项：CATALOG、MENU、BUTTON、EXTLINK）
+    menu_type = models.CharField(
+        max_length=255,
+        choices=[
+            ("CATALOG", "目录"),
+            ("MENU", "菜单"),
+            ("BUTTON", "按钮"),
+            ("EXTLINK", "外部链接"),
+        ],
+    )
+    # 菜单项路径
+    path = models.CharField(max_length=255, null=True)
+    # 菜单项对应的组件名称
+    component = models.CharField(max_length=255, null=True)
+    # 菜单项排序值
+    sort = models.IntegerField(default=1)
+    # 菜单项是否可见（1 表示可见，0 表示不可见）
+    visible = models.IntegerField(default=1)
+    # 菜单项图标
+    icon = models.CharField(max_length=255, null=True)
+    # 菜单项重定向路径
+    redirect = models.CharField(max_length=255, null=True)
+    # 菜单项权限（可选，用于权限控制）
+    perm = models.CharField(max_length=255, null=True, unique=True)
+    # 角色
+    roles = models.ManyToManyField(Role)
+
+    def __str__(self):
+        return self.name
