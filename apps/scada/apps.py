@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class AlertConfig(AppConfig):
+class GrmConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "apps.alert"
+    name = "apps.scada"

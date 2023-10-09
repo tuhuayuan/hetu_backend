@@ -2,7 +2,8 @@ from datetime import datetime
 
 import requests
 
-from utils.grm.schemas import ModuleInfo, ModuleToken, ModuleVar
+from apps.scada.utils.grm.schemas import GrmModuleInfo, GrmModuleToken, GrmVariable
+
 
 
 class GrmError(Exception):
@@ -34,7 +35,7 @@ class GrmClient:
         self._module_url = module_url
         self._timeout = timeout
         self._reconnect = reconnect
-        self._module_token: ModuleToken = None
+        self._module_token: GrmModuleToken = None
 
     def _exdata(self, data: str, op: str) -> list[str]:
         """GRM数据获取接口"""
@@ -58,7 +59,7 @@ class GrmClient:
         else:
             raise GrmError(-1, "未知错误")
 
-    def _exlogon(self) -> ModuleToken:
+    def _exlogon(self) -> GrmModuleToken:
         """GRM模块登录"""
 
         data = f"GRM={self._module_id}\r\nPASS={self._module_secret}"
@@ -71,7 +72,7 @@ class GrmClient:
         results = resp.text.split("\r\n")
 
         if results[0] == "OK":
-            self._module_token = ModuleToken(
+            self._module_token = GrmModuleToken(
                 id=self._module_id,
                 sid=results[2].split("=")[1],
                 data_url=results[1].split("=")[1],
@@ -86,7 +87,7 @@ class GrmClient:
     def token(self):
         return self._module_token
 
-    def connect(self, token: ModuleToken = None, force=False) -> ModuleToken:
+    def connect(self, token: GrmModuleToken = None, force=False) -> GrmModuleToken:
         """连接到模块数据
         1、SID对于每个模块有最大数量限制
         2、SID不活跃10分钟会自动过期
@@ -122,18 +123,18 @@ class GrmClient:
         return wrapper
 
     @_with_reconnect
-    def enumerate(self) -> list[ModuleVar]:
+    def enumerate(self) -> list[GrmVariable]:
         """枚举模块变量"""
 
         lines = self._exdata("NTRP", "E")
         n = int(lines[0])
-        vars: list[ModuleVar] = []
+        vars: list[GrmVariable] = []
 
         for row in lines[1 : n + 1]:
             fields = row.split(",")
             vars.append(
-                ModuleVar(
-                    module_id=self._module_id,
+                GrmVariable(
+                    module_number=self._module_id,
                     name=fields[0],
                     type=fields[1],
                     rw=(fields[2] == "W"),
@@ -143,7 +144,7 @@ class GrmClient:
         return vars
 
     @_with_reconnect
-    def read(self, vars: list[ModuleVar]) -> None:
+    def read(self, vars: list[GrmVariable]) -> None:
         """读取列表中的变量值"""
 
         data = f"{len(vars)}\r\n"
@@ -161,7 +162,7 @@ class GrmClient:
                 var.value = float(row)
 
     @_with_reconnect
-    def write(self, vars: list[ModuleVar]) -> None:
+    def write(self, vars: list[GrmVariable]) -> None:
         """写入列表中变量的值"""
 
         data = f"{len(vars)}\r\n"
@@ -175,11 +176,11 @@ class GrmClient:
             v.write_error = int(r)
 
     @_with_reconnect
-    def info(self) -> ModuleInfo:
+    def info(self) -> GrmModuleInfo:
         format_str = "%Y%m%d%H%M%S%f"  # 时间格式，包括毫秒部分
         lines = self._exdata("", "I")
 
-        return ModuleInfo(
+        return GrmModuleInfo(
             id=self._module_id,
             name=lines[0],
             desc=lines[1],

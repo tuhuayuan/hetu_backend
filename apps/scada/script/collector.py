@@ -7,7 +7,8 @@ import click
 from prometheus_client import CollectorRegistry, start_wsgi_server
 from prometheus_client.core import GaugeMetricFamily
 
-from utils.grm.client import GrmClient, GrmError
+from apps.scada.utils.grm.client import GrmClient, GrmError
+
 
 # 配置标准输出到日志
 logger = logging.getLogger()
@@ -16,8 +17,8 @@ logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 
 
 class GrmCollector(object):
-    def __init__(self, module_id, module_secret, module_url):
-        self._client = GrmClient(module_id, module_secret, module_url)
+    def __init__(self, module_number, module_secret, module_url):
+        self._client = GrmClient(module_number, module_secret, module_url)
         self._module_url = module_url
         try:
             self._client.connect()
@@ -56,7 +57,11 @@ class GrmCollector(object):
     help="Random port start number",
 )
 @click.option(
-    "--host", envvar="HOST", default="127.0.0.1", type=str, help="Host address"
+    "--host",
+    envvar="HOST",
+    default="127.0.0.1",
+    type=str,
+    help="Host address",
 )
 @click.option(
     "--advertise",
@@ -66,7 +71,11 @@ class GrmCollector(object):
     help="Advertise address",
 )
 @click.option(
-    "--module-id", envvar="MODULE_ID", required=True, type=str, help="Module ID"
+    "--module-number",
+    envvar="MODULE_NUMBER",
+    required=True,
+    type=str,
+    help="Module Number",
 )
 @click.option(
     "--module-secret",
@@ -76,12 +85,16 @@ class GrmCollector(object):
     help="Module secret",
 )
 @click.option(
-    "--module-url", envvar="MODULE_URL", required=True, type=str, help="Module URL"
+    "--module-url",
+    envvar="MODULE_URL",
+    required=True,
+    type=str,
+    help="Module URL",
 )
-def cli(random_port, host, advertise, module_id, module_secret, module_url):
+def cli(random_port, host, advertise, module_number, module_secret, module_url):
     """命令入口"""
     collector = GrmCollector(
-        module_id=module_id, module_secret=module_secret, module_url=module_url
+        module_number=module_number, module_secret=module_secret, module_url=module_url
     )
     registry = CollectorRegistry()
     registry.register(collector)

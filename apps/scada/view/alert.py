@@ -4,19 +4,19 @@ import json
 import os
 from datetime import datetime
 from typing import Any
-from django.shortcuts import get_object_or_404
 
 import requests
 import yaml
 from dateutil.parser import parser
 from django.conf import settings
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
-from apps.alert.models import NotifyMessage
-from apps.alert.schemas import AlertRule, AlertRuleIn, NotifyMessageOut
+from apps.scada.models import NotifyMessage
+from apps.scada.schema.alert import AlertRule, AlertRuleIn, NotifyMessageOut
 from utils.schema.base import api_schema
 from utils.schema.paginate import api_paginate
 
@@ -346,7 +346,7 @@ def ack_notify(request, notify_id: int):
     try:
         message = get_object_or_404(NotifyMessage, id=notify_id)
     except:
-        raise HttpError(404, '通知对象不存在')
+        raise HttpError(404, "通知对象不存在")
 
     if not message.ack:
         message.ack = True

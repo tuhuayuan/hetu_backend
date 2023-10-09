@@ -12,7 +12,7 @@ scrape_configs:
     metrics_path: '/metrics'
     scheme: 'http'
     http_sd_configs:
-      - url: 'http://host.docker.internal:8000/api/exporter/metrics/running'
+      - url: 'http://host.docker.internal:8000/api/scada/collector/sd'
         refresh_interval: 10s
     relabel_configs:
       - source_labels: [__address__]

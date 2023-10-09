@@ -32,9 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.staticfiles",
     "casbin_adapter.apps.CasbinAdapterConfig",
-    "apps.grm",
-    "apps.exporter",
-    "apps.alert",
+    "apps.scada",
     "apps.sys",
 ]
 
@@ -115,7 +113,7 @@ PROMETHEUS_RULES_CHECKER = "docker run --rm -it --entrypoint promtool -v $PWD/de
 SUPERVISOR_XMLRPC_URL = "http://localhost:9001/RPC2"
 
 # Exporter命令
-SUPERVISOR_EXPORT_COMMAND = "python -m apps.exporter.script.exporter"
+SUPERVISOR_EXPORT_COMMAND = "collector"
 
 # Exporter起始端口
 SUPERVISOR_EXPORT_PORT = 20000

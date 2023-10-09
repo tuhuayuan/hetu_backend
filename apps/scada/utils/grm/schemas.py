@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class ModuleToken(BaseModel):
+class GrmModuleToken(BaseModel):
     id: str
     # 数据获取的SID
     sid: str
@@ -11,7 +11,7 @@ class ModuleToken(BaseModel):
     data_url: str
 
     
-class ModuleInfo(BaseModel):
+class GrmModuleInfo(BaseModel):
     id: str
     # 模块的名称
     name: str
@@ -31,9 +31,9 @@ class ModuleInfo(BaseModel):
     status: int
 
 
-class ModuleVar(BaseModel):
+class GrmVariable(BaseModel):
     # 模块ID
-    module_id: str
+    module_number: str
     # 变量名
     name: str
     # 变量类型 I/F/B

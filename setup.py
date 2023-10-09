@@ -21,7 +21,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "exporter = apps.exporter.script.exporter:cli",
+            "collector = apps.scada.script.collector:cli",
         ],
     },
 )
