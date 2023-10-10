@@ -14,6 +14,7 @@ from apps.scada.schema.variable import (
     VariableOptionOut,
     VariableOut,
     ReadValueOut,
+    VariableUpdateIn,
     WriteValueIn,
     WriteValueOut,
 )
@@ -130,14 +131,12 @@ def get_variable_option_list(request, module_id: int):
     response=VariableOut,
     auth=AuthBearer([("scada:variable:update", "x")]),
 )
-def update_variable(request, variable_id: int, payload: VariableIn):
+def update_variable(request, variable_id: int, payload: VariableUpdateIn):
     """更新变量信息"""
 
     v = get_object_or_404(Variable, id=variable_id)
-    v.name = payload.name
     v.type = payload.type
     v.rw = payload.rw
-    v.local = payload.local
     v.details = payload.details
     v.save()
     return v

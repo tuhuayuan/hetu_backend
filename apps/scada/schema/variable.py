@@ -40,6 +40,16 @@ class VariableIn(VariableBase):
     pass
 
 
+class VariableUpdateIn(Schema):
+    """更新请求结构"""
+
+    # 变量类型 I/F/B
+    type: str
+    # 变量读写
+    rw: bool = False
+    # 自定义描述
+    details: str
+
 class ReadValueOut(Schema):
     """变量值结构体"""
 

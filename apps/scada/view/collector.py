@@ -1,11 +1,8 @@
-import configparser
 import fcntl
-import glob
 import os
 import time
 from string import Template
 from xmlrpc.client import ServerProxy
-from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from ninja import Router
@@ -17,6 +14,7 @@ from apps.scada.schema.collector import (
     CollectorOut,
     CollectorStatusIn,
 )
+from apps.sys.utils import AuthBearer
 from utils.schema.base import api_schema
 from utils.schema.paginate import api_paginate
 
@@ -116,7 +114,11 @@ def delete_process_config(collector: Collector):
     os.remove(file_path)
 
 
-@router.put("", response=CollectorOut)
+@router.put(
+    "",
+    response=CollectorOut,
+    auth=AuthBearer([("scada:collector:create", "x")]),
+)
 @api_schema
 def create_collector(request, payload: CollectorIn):
     """创建数据采集器器"""
@@ -189,7 +191,11 @@ def service_discover(request):
     return 200, running_list
 
 
-@router.get("", response=list[CollectorOut])
+@router.get(
+    "",
+    response=list[CollectorOut],
+    auth=AuthBearer([("scada:collector:list", "x")]),
+)
 @api_paginate
 def get_collector_list(request):
     collectors = Collector.objects.all()
@@ -213,7 +219,11 @@ def get_collector_list(request):
     return outlist
 
 
-@router.patch("/{collector_id}", response=CollectorOut)
+@router.patch(
+    "/{collector_id}",
+    response=CollectorOut,
+    auth=AuthBearer([("scada:collector:change_status", "x")]),
+)
 @api_schema
 def change_collector_status(request, collector_id: int, payload: CollectorStatusIn):
     """修改收集器运行状态"""
@@ -260,7 +270,11 @@ def change_collector_status(request, collector_id: int, payload: CollectorStatus
     return out
 
 
-@router.delete("/{collector_id}", response=str)
+@router.delete(
+    "/{collector_id}",
+    response=str,
+    auth=AuthBearer([("scada:collector:delete", "x")]),
+)
 @api_schema
 def delete_collector(request, collector_id: int):
     """删除接口"""

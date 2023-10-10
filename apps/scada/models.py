@@ -42,19 +42,52 @@ class Variable(models.Model):
         unique_together = ("name", "module")
 
 
-class NotifyMessage(models.Model):
+class Rule(models.Model):
+    """警告规则结构"""
+
+    # 变量
+    variable = models.ForeignKey(Variable, on_delete=models.PROTECT)
+    # 规则名称
+    name = models.CharField(max_length=255)
+    # 描述
+    description = models.TextField()
+    # 规则类型
+    alert_type = models.CharField(max_length=255)
+    # 警告类型
+    alert_level = models.CharField(max_length=255, default="none")
+    # 阈值
+    threshold = models.FloatField(default=0.0)
+    # 状态值
+    state = models.IntegerField(default=0)
+    # 权重
+    weight = models.FloatField(default=1.0)
+    # 持续时间
+    duration = models.CharField(max_length=20, default="0s")
+
+    class Meta:
+        # 定义联合唯一约束
+        unique_together = ("name", "variable")
+
+    def __str__(self):
+        return self.name
+
+
+# 通知等级
+LEVEL_CHOICES = (
+    ("default", "默认"),
+    ("info", "信息"),
+    ("warning", "警告"),
+    ("error", "错误"),
+    ("critical", "严重"),
+)
+
+
+class Notify(models.Model):
     """通知消息模型"""
 
     # 外部的ID标识，表示是否属于同一个事件
     external_id = models.CharField(max_length=255, db_index=True)
     # 通知等级
-    LEVEL_CHOICES = (
-        ("default", "默认"),
-        ("info", "信息"),
-        ("warning", "警告"),
-        ("error", "错误"),
-        ("critical", "严重"),
-    )
     level = models.CharField(max_length=255, choices=LEVEL_CHOICES)
     # 标题
     title = models.CharField(max_length=255, db_index=True)
