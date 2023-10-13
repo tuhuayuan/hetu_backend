@@ -8,6 +8,8 @@ class VariableBase(Schema):
     module_id: int
     # 变量名
     name: str
+    # 变量组
+    group: str
     # 变量类型 I/F/B
     type: str
     # 变量读写

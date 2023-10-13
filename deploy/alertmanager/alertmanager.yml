@@ -4,10 +4,10 @@ global:
 
 route:
   receiver: alert_api
-  group_by: ['module_id', 'var_name', 'alertname']
+  group_by: ['module_number', 'variable_name', 'alertname']
   group_wait: 5s
-  group_interval: 10s
-  repeat_interval: 30s
+  group_interval: 1m
+  repeat_interval: 55s
 
 receivers:
   - name: alert_api

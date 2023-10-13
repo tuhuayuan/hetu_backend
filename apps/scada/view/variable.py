@@ -203,6 +203,7 @@ def update_variable_values(request, payload: list[WriteValueIn]):
                     type=v.type,
                     name=v.name,
                     value=p.value,
+                    group=v.group,
                 )
             ]
             try:

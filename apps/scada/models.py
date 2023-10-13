@@ -26,6 +26,8 @@ class Variable(models.Model):
     name = models.CharField(max_length=255)
     # 变量类型
     type = models.CharField(max_length=255)
+    # 变量组
+    group = models.CharField(max_length=255, db_index=True, default="")
     # 变量读写权限
     rw = models.BooleanField(default=False)
     # 是否本地变量
@@ -114,13 +116,17 @@ class Site(models.Model):
     """站点模型"""
 
     # 站点名称
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     # 联系人姓名
     contact = models.CharField(max_length=255)
     # 联系人手机号码
     mobile = models.CharField(max_length=255)
     # 站点状态，可以是整数或其他适当的数据类型
     status = models.IntegerField(default=1)
+    # 经度
+    longitude = models.FloatField(default=114.305215)
+    # 纬度
+    latitude = models.FloatField(default=30.592849)
     # 记录站点信息创建的日期和时间
     create_time = models.DateTimeField(auto_now_add=True)
     # 备注信息，可以为空
@@ -131,7 +137,7 @@ class Graph(models.Model):
     """组态图模型"""
 
     # 组态名称
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     # 状态字段，用于表示站点配置的状态
     status = models.IntegerField()
     # 记录站点配置信息创建的日期和时间
@@ -139,7 +145,9 @@ class Graph(models.Model):
     # JSON 字段，用于存储绘图相关的配置数据
     data = models.TextField()
     # 备注信息，可以为空
-    remark = models.CharField(max_length=255)
+    remark = models.CharField(max_length=255, null=True)
+    # 站点
+    site = models.ForeignKey(Site, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.name

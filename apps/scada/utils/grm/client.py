@@ -5,7 +5,6 @@ import requests
 from apps.scada.utils.grm.schemas import GrmModuleInfo, GrmModuleToken, GrmVariable
 
 
-
 class GrmError(Exception):
     def __init__(self, code: int, message: str):
         self.message = message
@@ -49,7 +48,9 @@ class GrmClient:
             data=data.encode("utf-8"),
             timeout=self._timeout,
         )
-        resp.raise_for_status()
+        if resp.status_code != 200:
+            raise GrmError(resp.status_code, "HTTP连接错误")
+        
         results = resp.text.split("\r\n")
 
         if results[0] == "OK":
@@ -68,7 +69,9 @@ class GrmClient:
         resp = requests.post(
             url=url, headers=self.req_header, data=data, timeout=self._timeout
         )
-        resp.raise_for_status()
+        if resp.status_code != 200:
+            raise GrmError(resp.status_code, "HTTP连接错误")
+
         results = resp.text.split("\r\n")
 
         if results[0] == "OK":
@@ -126,7 +129,7 @@ class GrmClient:
     def enumerate(self) -> list[GrmVariable]:
         """枚举模块变量"""
 
-        lines = self._exdata("NTRP", "E")
+        lines = self._exdata("NTRPG", "E")
         n = int(lines[0])
         vars: list[GrmVariable] = []
 
@@ -139,6 +142,7 @@ class GrmClient:
                     type=fields[1],
                     rw=(fields[2] == "W"),
                     priority=int(fields[3]),
+                    group=fields[4],
                 )
             )
         return vars
@@ -156,7 +160,7 @@ class GrmClient:
         for var, row in zip(vars, lines[1 : n + 1]):
             if row.startswith("#ERROR#"):
                 # 给变量设置错误状态
-                var.read_error = int(row[6:])
+                var.read_error = int(row[7:])
             else:
                 var.read_error = 0
                 var.value = float(row)

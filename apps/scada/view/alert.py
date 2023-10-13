@@ -60,7 +60,6 @@ def build_labels(r: Rule) -> dict[str, Any]:
         "severity": r.alert_level,
         "module_number": r.variable.module.module_number,
         "variable_name": r.variable.name,
-        "alert_name": r.name,
     }
 
 
@@ -68,10 +67,7 @@ def build_annotations(r: Rule) -> dict[str, Any]:
     """构建注解"""
 
     return {
-        "module_number": r.variable.module.module_number,
-        "variable_name": r.variable.name,
-        "name": r.name,
-        "alert_type": r.alert_type,
+        "details": "",
     }
 
 
@@ -239,7 +235,7 @@ def create_notify(request: HttpRequest):
         # 计算外部ID
         hasher = hashlib.sha1(
             (
-                labels["module_number"] + labels["variable_name"] + labels["alert_name"]
+                labels["module_number"] + labels["variable_name"] + labels["alertname"]
             ).encode()
         )
         external_id = hasher.hexdigest()
@@ -266,10 +262,12 @@ def create_notify(request: HttpRequest):
             suffix_title = "解除警告"
             # 强制等级为info级别
             level = "info"
+            # pass
 
         # 收到的是早期的消息则不管
         if last_one and notified_at <= last_one.notified_at:
-            continue
+            # continue
+            pass
 
         # 构造title
         title = (
@@ -277,7 +275,7 @@ def create_notify(request: HttpRequest):
             + "::"
             + labels["variable_name"]
             + "::"
-            + labels["alert_name"]
+            + labels["alertname"]
             + "::"
             + suffix_title
         )
@@ -287,7 +285,7 @@ def create_notify(request: HttpRequest):
             external_id=external_id,
             level=level,
             title=title,
-            content='',
+            content="",
             source="alertmanager",
             notified_at=notified_at,
             created_at=created_at,

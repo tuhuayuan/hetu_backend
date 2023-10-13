@@ -179,8 +179,8 @@ def service_discover(request):
                     {
                         "targets": [get_exporter_url(process_name)],
                         "labels": {
-                            "__meta_inverval": f"{c.interval}s",
-                            "__meta_timeout": f"{c.timeout}s",
+                            "__scrape_interval__": f"{c.interval}s",
+                            "__scrape_timeout__": f"{c.timeout}s",
                         },
                     }
                 )
