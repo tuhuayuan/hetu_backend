@@ -13,5 +13,5 @@ receivers:
   - name: alert_api
     webhook_configs:
       - send_resolved: true
-        url: http://host.docker.internal:8000/api/scada/alert/notify
+        url: http://hetu-api:8000/api/scada/alert/notify
         max_alerts: 0

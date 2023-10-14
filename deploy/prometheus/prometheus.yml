@@ -1,7 +1,7 @@
 global:
-  scrape_interval: 5s
-  scrape_timeout: 3s
-  evaluation_interval: 5s
+  scrape_interval: 15s
+  scrape_timeout: 5s
+  evaluation_interval: 15s
 
 scrape_configs:
   - job_name: 'prometheus' # 监控Prometheus自身的指标
@@ -12,7 +12,7 @@ scrape_configs:
     metrics_path: '/metrics'
     scheme: 'http'
     http_sd_configs:
-      - url: 'http://host.docker.internal:8000/api/scada/collector/sd'
+      - url: 'http://hetu-api:8000/api/scada/collector/sd'
         refresh_interval: 10s
     relabel_configs:
       - source_labels: [__address__]
@@ -22,13 +22,13 @@ scrape_configs:
 
   - job_name: 'grm_local'
     static_configs:
-      - targets: ['host.docker.internal:9091']
+      - targets: ['hetu-pushgateway:9091']
     honor_labels: true
 
 alerting:
   alertmanagers:
       - static_configs:
-          - targets: ['host.docker.internal:9093']
+          - targets: ['hetu-alertmanager:9093']
 
 rule_files:
   - '/etc/prometheus/include/grm_*.rules'

@@ -27,7 +27,7 @@ supervisor_tpl = Template(
     """
 [program:$process_name]
 command=$command
-environment=MODULE_NUMBER="$module_number",MODULE_SECRET="$module_secret",MODULE_URL="$module_url",RANDOM_PORT=$port,HOST="$host",ADVERTISE="$advertise"
+environment=PYTHONPATH=/app/src,MODULE_NUMBER="$module_number",MODULE_SECRET="$module_secret",MODULE_URL="$module_url",RANDOM_PORT=$port,HOST="$host",ADVERTISE="$advertise"
 autostart=false
 """
 )
@@ -72,7 +72,7 @@ def get_proccess_name(collector: Collector):
 def get_proccess_file(collector: Collector):
     """获取配置文件路径"""
 
-    return f"{settings.SUPERVISOR_EXPORT_DIR}/{get_proccess_name(collector)}.conf"
+    return f"{settings.SUPERVISOR_COLLECTOR_DIR}/{get_proccess_name(collector)}.conf"
 
 
 def rewrite_process_config(collector: Collector) -> bool:
@@ -81,20 +81,16 @@ def rewrite_process_config(collector: Collector) -> bool:
     process_name = get_proccess_name(collector)
     file_path = get_proccess_file(collector)
 
-    # 创建配置文件
-    if os.path.exists(file_path):
-        os.remove(file_path)
-
     # 配置文件内容
     content = supervisor_tpl.substitute(
         process_name=process_name,
         module_number=collector.module.module_number,
         module_secret=collector.module.module_secret,
         module_url=collector.module.module_url,
-        command=settings.SUPERVISOR_EXPORT_COMMAND,
-        host=settings.SUPERVISOR_EXPORT_HOST,
-        port=settings.SUPERVISOR_EXPORT_PORT,
-        advertise=settings.SUPERVISOR_EXPORT_ADVERTISE,
+        command=settings.SUPERVISOR_COLLECTOR_COMMAND,
+        host=settings.SUPERVISOR_COLLECTOR_HOST,
+        port=settings.SUPERVISOR_COLLECTOR_PORT,
+        advertise=settings.SUPERVISOR_COLLECTOR_ADVERTISE,
     )
     # 获得文件锁
     with open(file_path, "w") as file:
@@ -206,8 +202,11 @@ def get_collector_list(request):
 
         # 获取运行状态
         process_name = get_proccess_name(c)
-        info = rpc.supervisor.getProcessInfo(process_name)
-        out.running = info["statename"] == "RUNNING"
+        try:
+            info = rpc.supervisor.getProcessInfo(process_name)
+            out.running = info["statename"] == "RUNNING"
+        except:
+            out.running = False
 
         # 获取运行地址
         if out.running:
@@ -230,7 +229,7 @@ def change_collector_status(request, collector_id: int, payload: CollectorStatus
 
     collector = get_object_or_404(Collector, id=collector_id)
     process_name = get_proccess_name(collector)
-
+    
     info = rpc.supervisor.getProcessInfo(process_name)
     running = info["statename"] == "RUNNING"
     collector_url = ""

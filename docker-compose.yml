@@ -1,7 +1,15 @@
-version: '3'
+version: "3"
 services:
   redis:
     image: redis:7
+    hostname: hetu-redis
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+    healthcheck:
+      test: redis-cli ping
+      interval: 1s
+      timeout: 3s
+      retries: 50
     ports:
       - 6379:6379
     volumes:
@@ -13,6 +21,12 @@ services:
     image: postgres:13
     ports:
       - 5432:5432
+    hostname: hetu-db
+    healthcheck:
+      test: pg_isready -U hetu
+      interval: 2s
+      timeout: 3s
+      retries: 40
     environment:
       POSTGRES_USER: hetu
       POSTGRES_PASSWORD: hetu
@@ -35,21 +49,32 @@ services:
     image: prom/prometheus:v2.45.0
     ports:
       - 9090:9090
-    command: 
-      --enable-feature=promql-at-modifier
+    hostname: hetu-tsdb
+    env_file:
+      - .env
+    command: --enable-feature=promql-at-modifier
       --web.enable-admin-api
       --web.enable-lifecycle
       --config.file=/etc/prometheus/prometheus.yml
     volumes:
       - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./deploy/prometheus/include:/etc/prometheus/include
+      - prometheus_data:/prometheus
+    healthcheck: # 添加健康检查
+      test: wget --quiet --tries=1 --spider http://localhost:9090/-/healthy || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks:
       - my_network
-  
+
   pushgateway:
     image: prom/pushgateway:v1.6.2
     ports:
       - 9091:9091
+    env_file:
+      - .env
+    hostname: hetu-pushgateway
     networks:
       - my_network
 
@@ -57,10 +82,71 @@ services:
     image: prom/alertmanager:v0.25.1
     ports:
       - 9093:9093
-    command: 
-      --config.file=/etc/alertmanager/alertmanager.yml
+    env_file:
+      - .env
+    hostname: hetu-alertmanager
+    command: --config.file=/etc/alertmanager/alertmanager.yml
     volumes:
       - ./deploy/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    networks:
+      - my_network
+
+  migrator:
+    image: hetu:${HETU_VERSION:-latest}-base
+    tty: true
+    restart: "no"
+    env_file:
+      - .env
+    command:
+      - bash
+      - -c
+      - |
+        python manage.py makemigrations
+        python manage.py migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - my_network
+
+  api:
+    build:
+      context: .
+      target: base
+    image: hetu:${HETU_VERSION:-latest}-base
+    hostname: hetu-api
+    tty: true
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    volumes:
+      - ./deploy/supervisor/include:/etc/supervisor/include
+      - ./deploy/prometheus/include:/etc/prometheus/include
+    networks:
+      - my_network
+
+  collector:
+    build:
+      context: .
+      target: collector
+    image: hetu:${HETU_VERSION:-latest}-collector
+    command: supervisord -n  -c /etc/supervisor/supervisord.conf
+    hostname: hetu-collector
+    volumes:
+      - ./deploy/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf
+      - ./deploy/supervisor/include:/etc/supervisor/include
+    env_file:
+      - .env
+    ports:
+      - 9001:9001
     networks:
       - my_network
 
@@ -70,3 +156,4 @@ networks:
 volumes:
   redis_data:
   postgres_data:
+  prometheus_data:

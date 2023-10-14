@@ -63,7 +63,7 @@ def get_graph_list(request, site_id: int = None, keywords: str = None):
     auth=AuthBearer([("scada:graph:info", "x")]),
 )
 @api_schema
-def get_graph_list(request, graph_id: int):
+def get_graph_info(request, graph_id: int):
     """获取组态图"""
 
     return get_object_or_404(Graph, id=graph_id)

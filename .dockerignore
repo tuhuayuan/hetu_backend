@@ -1,0 +1,38 @@
+# 忽略 Python 缓存文件
+**/__pycache__
+**/*.pyc
+
+# 忽略本地开发相关文件
+*.sqlite3
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.egg-info
+.env
+.dockerignore
+.DS_Store
+
+# 忽略版本控制相关文件
+.git
+.gitignore
+
+# 忽略IDE生成的文件
+.idea
+.vscode
+
+# 忽略日志文件
+logs
+*.log
+
+# 忽略测试和文档相关文件
+htmlcov
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+*.cover
+
+# 忽略系统运行产生的配置文件
+deploy/**/include/
