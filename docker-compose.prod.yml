@@ -91,6 +91,23 @@ services:
     networks:
       - my_network
 
+  collector:
+    build:
+      context: .
+      target: collector
+    image: hetu:${HETU_VERSION:-latest}-collector
+    command: supervisord -n  -c /etc/supervisor/supervisord.conf
+    hostname: hetu-collector
+    volumes:
+      - ./deploy/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf
+      - ./deploy/supervisor/include:/etc/supervisor/include
+    env_file:
+      - .env
+    ports:
+      - 9001:9001
+    networks:
+      - my_network
+      
   migrator:
     image: hetu:${HETU_VERSION:-latest}-base
     tty: true
@@ -130,23 +147,6 @@ services:
     volumes:
       - ./deploy/supervisor/include:/etc/supervisor/include
       - ./deploy/prometheus/include:/etc/prometheus/include
-    networks:
-      - my_network
-
-  collector:
-    build:
-      context: .
-      target: collector
-    image: hetu:${HETU_VERSION:-latest}-collector
-    command: supervisord -n  -c /etc/supervisor/supervisord.conf
-    hostname: hetu-collector
-    volumes:
-      - ./deploy/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf
-      - ./deploy/supervisor/include:/etc/supervisor/include
-    env_file:
-      - .env
-    ports:
-      - 9001:9001
     networks:
       - my_network
 

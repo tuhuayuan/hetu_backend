@@ -273,4 +273,7 @@ dump.rdb
 ### Project template
 deploy/prometheus/include
 deploy/supervisor/include
+deploy/prometheus/prometheus.yml
+deploy/alertmanager/alertmanager.yml
+deploy/supervisor/supervisord.conf
 .pytest_cache/
