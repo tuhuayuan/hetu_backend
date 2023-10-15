@@ -11,9 +11,9 @@ class Role(models.Model):
     # 状态 (1: 活动, 0: 非活动)
     status = models.IntegerField(default=1)
     # 排序
-    sort = models.IntegerField()
+    sort = models.IntegerField(default=1)
     # 创建时间
-    create_time = models.DateTimeField(auto_created=True)
+    create_time = models.DateTimeField(auto_now_add=True)
     # 更新时间 (可选)
     update_time = models.DateTimeField(auto_now=True)
 
@@ -26,9 +26,9 @@ class Department(models.Model):
     # 部门名称描述
     description = models.CharField(max_length=255)
     # 创建时间
-    create_time = models.DateTimeField()
+    create_time = models.DateTimeField(auto_now_add=True)
     # 部门状态
-    status = models.IntegerField()
+    status = models.IntegerField(default=1)
     # 上级部门
     parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True)
 
@@ -60,7 +60,7 @@ class User(models.Model):
     # 角色外键
     roles = models.ManyToManyField(Role)
     # 创建时间
-    create_time = models.DateTimeField()
+    create_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.username
@@ -74,7 +74,7 @@ class DictType(models.Model):
     # 字典类型代码
     code = models.CharField(max_length=255, unique=True)
     # 字典类型状态
-    status = models.IntegerField()
+    status = models.IntegerField(default=1)
     # 备注
     remark = models.CharField(max_length=255, null=True)
 
@@ -87,9 +87,9 @@ class DictData(models.Model):
     # 字典数据值
     value = models.CharField(max_length=255)
     # 字典数据状态
-    status = models.IntegerField()
+    status = models.IntegerField(default=1)
     # 排序
-    sort = models.IntegerField()
+    sort = models.IntegerField(default=1)
     # 描述
     remark = models.CharField(max_length=255, null=True)
     # 字典类型码
