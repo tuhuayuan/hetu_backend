@@ -75,6 +75,9 @@ services:
     env_file:
       - .env
     hostname: hetu-pushgateway
+    command: --persistence.interval=15s --persistence.file=/data/persistence.json
+    volumes:
+      - pushgateway_data:/data
     networks:
       - my_network
 
@@ -107,7 +110,7 @@ services:
       - 9001:9001
     networks:
       - my_network
-      
+
 networks:
   my_network:
 
@@ -115,3 +118,4 @@ volumes:
   redis_data:
   postgres_data:
   prometheus_data:
+  pushgateway_data:

@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ninja import Query, Router
 from ninja.errors import HttpError
-from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
+from prometheus_client import CollectorRegistry, Gauge, delete_from_gateway, push_to_gateway
 
 from apps.scada.models import Module, Variable
 from apps.scada.schema.variable import (
@@ -163,7 +163,7 @@ def write_local_var(variable: Variable, payload: WriteValueIn):
 
     # 写入
     push_to_gateway(
-        settings.PROMETHUES_PUSHGATEWAY,
+        settings.PUSHGATEWAY_URL,
         job="grm_local",
         registry=registry,
         grouping_key=labels,
@@ -265,5 +265,16 @@ def delete_variable(request, variable_id: int):
     """删除变量接口"""
 
     v = get_object_or_404(Variable, id=variable_id)
+
+    # 本地变量要从pushgateway删除
+    if v.local:
+        labels = {"name": v.name, "type": v.type, "local": "true"}
+
+        delete_from_gateway(
+            settings.PUSHGATEWAY_URL,
+            job="grm_local",
+            grouping_key=labels,
+        )
+
     v.delete()
     return "OK"
