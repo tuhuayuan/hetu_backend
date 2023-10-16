@@ -6,7 +6,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 """
 from django.urls import path
 from ninja import NinjaAPI
-
+from django.http import HttpResponse
 from apps.scada.view import router as scada_router
 from apps.sys.view import router as sys_router
 from utils.schema.errors import set_default_exc_handlers
@@ -18,6 +18,11 @@ api.add_router("scada/", scada_router)
 api.add_router("sys/", sys_router)
 
 
+def healthy(request):
+    return HttpResponse("Ok")
+
+
 urlpatterns = [
     path("api/", api.urls),
+    path("-/healthy", healthy, name="healthy"),
 ]

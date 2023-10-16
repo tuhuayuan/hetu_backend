@@ -7,9 +7,9 @@ services:
       ALLOW_EMPTY_PASSWORD: "yes"
     healthcheck:
       test: redis-cli ping
-      interval: 1s
-      timeout: 3s
-      retries: 50
+      interval: 15s
+      timeout: 10s
+      retries: 10
     ports:
       - 6379:6379
     volumes:
@@ -24,9 +24,9 @@ services:
     hostname: hetu-db
     healthcheck:
       test: pg_isready -U hetu
-      interval: 2s
-      timeout: 3s
-      retries: 40
+      interval: 15s
+      timeout: 10s
+      retries: 10
     environment:
       POSTGRES_USER: hetu
       POSTGRES_PASSWORD: hetu
@@ -52,8 +52,8 @@ services:
       - prometheus_data:/prometheus
     healthcheck: # 添加健康检查
       test: wget --quiet --tries=1 --spider http://localhost:9090/-/healthy || exit 1
-      interval: 5s
-      timeout: 3s
+      interval: 15s
+      timeout: 10s
       retries: 10
     networks:
       - my_network
@@ -66,6 +66,11 @@ services:
       - .env
     hostname: hetu-pushgateway
     command: --persistence.interval=15s --persistence.file=/data/persistence.json
+    healthcheck:
+      test: wget --quiet --tries=1 --spider http://localhost:9091/-/healthy || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 10
     volumes:
       - pushgateway_data:/data
     networks:
@@ -79,6 +84,11 @@ services:
       - .env
     hostname: hetu-alertmanager
     command: --config.file=/etc/alertmanager/alertmanager.yml
+    healthcheck:
+      test: wget --quiet --tries=1 --spider http://localhost:9091/-/healthy || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 10
     volumes:
       - ./deploy/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
     networks:
@@ -130,6 +140,11 @@ services:
       - .env
     ports:
       - 8000:8000
+    healthcheck: # 添加健康检查
+      test: wget --quiet --tries=1 --spider http://localhost:8000/-/healthy || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 10
     depends_on:
       migrator:
         condition: service_completed_successfully

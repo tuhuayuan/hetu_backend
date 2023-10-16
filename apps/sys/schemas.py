@@ -398,7 +398,7 @@ class MenuTreeRouterOut(Schema):
         keep_alive: bool = True
 
     # 路由路径
-    path: str
+    path: str | None
     # 路由组件
     component: str | None
     # 路由名称 (可选，可以为 None)

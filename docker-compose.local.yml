@@ -76,6 +76,11 @@ services:
       - .env
     hostname: hetu-pushgateway
     command: --persistence.interval=15s --persistence.file=/data/persistence.json
+    healthcheck: # 添加健康检查
+      test: wget --quiet --tries=1 --spider http://localhost:9091/-/healthy || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 10
     volumes:
       - pushgateway_data:/data
     networks:
@@ -89,6 +94,11 @@ services:
       - .env
     hostname: hetu-alertmanager
     command: --config.file=/etc/alertmanager/alertmanager.yml
+    healthcheck: # 添加健康检查
+      test: wget --quiet --tries=1 --spider http://localhost:9093/-/healthy || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 10
     volumes:
       - ./deploy/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
     networks:
