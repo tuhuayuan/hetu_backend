@@ -105,6 +105,7 @@ def get_user_list(
     response=UserLoginInfoOut,
     auth=AuthBearer([("sys:user:me", "x"), ("user:{username}:me", "x")]),
 )
+@api_schema
 def get_user_login_info(request):
     """获取用户登陆信息"""
 
