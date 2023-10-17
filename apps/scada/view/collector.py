@@ -287,4 +287,4 @@ def delete_collector(request, collector_id: int):
     except:
         pass
 
-    return "OK"
+    return "Ok"

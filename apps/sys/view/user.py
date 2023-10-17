@@ -207,4 +207,4 @@ def delete_user(request, user_id: int):
     enforcer.load_policy()
     enforcer.remove_filtered_policy(0, u.username)
 
-    return "OK"
+    return "Ok"

@@ -1,6 +1,7 @@
-from django.core.management.base import BaseCommand
-from apps.scada.models import Module, Variable
 import pandas as pd
+from django.core.management.base import BaseCommand
+
+from apps.scada.models import Module, Variable
 
 
 class Command(BaseCommand):

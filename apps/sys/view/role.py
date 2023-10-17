@@ -162,4 +162,4 @@ def delete_role(request, role_id: int):
     enforcer.remove_filtered_policy(0, r.code)
 
     r.delete()
-    return "OK"
+    return "Ok"

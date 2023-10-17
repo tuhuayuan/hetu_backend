@@ -335,4 +335,4 @@ def ack_notify(request, notify_id: int):
         nofity.ack_at = datetime.now(timezone.utc)
         nofity.save()
 
-    return "OK"
+    return "Ok"

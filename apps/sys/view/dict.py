@@ -181,4 +181,4 @@ def delete_dictdata(request, data_id: int):
 
     dd = get_object_or_404(DictData, id=data_id)
     dd.delete()
-    return "OK"
+    return "Ok"

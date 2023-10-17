@@ -109,4 +109,4 @@ def delete_grm(request, module_id: int):
 
     module = get_object_or_404(Module, id=module_id)
     module.delete()
-    return "OK"
+    return "Ok"
