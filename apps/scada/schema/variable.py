@@ -27,6 +27,12 @@ class VariableOut(VariableBase):
     id: int
 
 
+class VariableGroupOut(Schema):
+    """变量组返回结构"""
+
+    group: str
+
+
 class VariableOptionOut(Schema):
     """选项列表结构"""
 
@@ -34,6 +40,8 @@ class VariableOptionOut(Schema):
     id: int
     # 变量名
     name: str
+    # 变量组
+    group: str
 
 
 class VariableIn(VariableBase):
@@ -51,6 +59,7 @@ class VariableUpdateIn(Schema):
     rw: bool = False
     # 自定义描述
     details: str
+
 
 class ReadValueOut(Schema):
     """变量值结构体"""

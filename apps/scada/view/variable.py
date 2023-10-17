@@ -6,10 +6,16 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ninja import Query, Router
 from ninja.errors import HttpError
-from prometheus_client import CollectorRegistry, Gauge, delete_from_gateway, push_to_gateway
+from prometheus_client import (
+    CollectorRegistry,
+    Gauge,
+    delete_from_gateway,
+    push_to_gateway,
+)
 
 from apps.scada.models import Module, Variable
 from apps.scada.schema.variable import (
+    VariableGroupOut,
     VariableIn,
     VariableOptionOut,
     VariableOut,
@@ -120,10 +126,32 @@ def create_variable(request, payload: VariableIn):
     auth=AuthBearer([("scada:variable:list", "x")]),
 )
 @api_schema
-def get_variable_option_list(request, module_id: int):
+def get_variable_option_list(request, module_id: int, group: str = None):
     """获取模块的变量选项"""
 
-    return Variable.objects.filter(module_id=module_id)
+    vs = Variable.objects.filter(module_id=module_id)
+
+    if group:
+        vs = vs.filter(group=group)
+
+    return vs.all()
+
+
+@router.get(
+    "/groups",
+    response=list[VariableGroupOut],
+    auth=AuthBearer([("scada:variable:list", "x")]),
+)
+@api_schema
+def get_variable_group_list(request, module_id: int, keywords: str = None):
+    """获取变量组"""
+
+    gs = Variable.objects.filter(module_id=module_id)
+
+    if keywords:
+        gs = gs.filter(Q(group__icontains=keywords))
+
+    return gs.values('group').distinct()
 
 
 @router.put(
@@ -242,12 +270,17 @@ def get_variable_info(request, variable_id: int):
     auth=AuthBearer([("scada:variable:list", "x")]),
 )
 @api_paginate
-def get_variable_list(request, module_id: int = None, keywords: str = None):
+def get_variable_list(
+    request, module_id: int = None, keywords: str = None, group: str = None
+):
     """列出模块的所有变量"""
     vs = Variable.objects.all()
 
     if module_id:
         vs = vs.filter(module_id=module_id)
+
+    if group:
+        vs = vs.filter(group=group)
 
     if keywords:
         vs = vs.filter(Q(name__icontains=keywords))

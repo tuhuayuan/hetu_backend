@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 
 from apps.scada.models import Module
-from apps.scada.schema.module import ModuleIn, ModuleInfoOut, ModuleOptionOut, ModuleOut
+from apps.scada.schema.module import ModuleIn, ModuleInfoOut, ModuleOptionOut, ModuleOut, ModuleUpdateIn
 from apps.scada.utils.grm.client import GrmError
 from apps.scada.utils.pool import get_grm_client
 from apps.sys.utils import AuthBearer
@@ -87,12 +87,11 @@ def get_module_list(request, keywords: str = None):
     auth=AuthBearer([("scada:module:update", "x")]),
 )
 @api_schema
-def update_grm(request, module_id: int, payload: ModuleIn):
+def update_grm(request, module_id: int, payload: ModuleUpdateIn):
     """更新模块信息"""
 
     module = get_object_or_404(Module, id=module_id)
     module.name = payload.name
-    module.module_number = payload.module_number
     module.module_secret = payload.module_secret
     module.module_url = payload.module_url
     module.save()

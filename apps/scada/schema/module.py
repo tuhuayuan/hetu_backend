@@ -19,6 +19,17 @@ class ModuleIn(Schema):
     module_url: str
 
 
+class ModuleUpdateIn(Schema):
+    """修改模块输入结构"""
+
+    # 名称
+    name: str
+    # 密钥
+    module_secret: str
+    # 地址
+    module_url: str
+
+
 class ModuleOut(Schema):
     """模块信息结构"""
 
@@ -41,6 +52,8 @@ class ModuleOptionOut(Schema):
     id: int
     # 名称
     name: str
+    # 模块编号
+    module_number: str
 
 
 class ModuleInfoOut(ModuleOut):
