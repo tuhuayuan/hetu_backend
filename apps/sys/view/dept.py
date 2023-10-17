@@ -83,7 +83,7 @@ def get_dept_list(request, status: int = None, keywords: str = None):
         if child_depts:
             for child in child_depts:
                 child_out = _get_children_out(child)
-                current_out.chidren.append(child_out)
+                current_out.children.append(child_out)
         return current_out
 
     ids = set([d.id for d in depts.all()])
@@ -119,6 +119,7 @@ def update_dept(request, dept_id: int, payload: DepartmentUpdateIn):
     """更新部门信息"""
 
     d = get_object_or_404(Department, id=dept_id)
+    d.sort = payload.sort
     d.description = payload.description
     d.status = payload.status
     d.parent_id = payload.parent_id

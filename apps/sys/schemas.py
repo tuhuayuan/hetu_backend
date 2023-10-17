@@ -72,7 +72,9 @@ class DepartmentIn(Schema):
     # 部门名称
     name: str
     # 部门名称描述
-    description: str
+    description: str | None
+    # 排序
+    sort: int = 1
     # 部门状态 (1: 活动, 0: 非活动)
     status: int
     # 上级部门
@@ -87,7 +89,9 @@ class DepartmentOut(Schema):
     # 部门名称
     name: str
     # 部门名称描述
-    description: str
+    description: str | None
+    # 排序
+    sort: int = 1
     # 部门状态 (1: 活动, 0: 非活动)
     status: int
     # 创建时间
@@ -99,7 +103,7 @@ class DepartmentOut(Schema):
 class DepartmentListOut(DepartmentOut):
     """部门列表树结构"""
 
-    chidren: list["DepartmentListOut"] = []
+    children: list["DepartmentListOut"] = []
 
 
 class DepartmentOptionOut(Schema):
@@ -117,7 +121,9 @@ class DepartmentUpdateIn(Schema):
     """更新结构"""
 
     # 部门名称描述
-    description: str
+    description: str | None
+    # 排序
+    sort: int = 1
     # 部门状态 (1: 活动, 0: 非活动)
     status: int
     # 上级部门ID

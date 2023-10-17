@@ -27,6 +27,8 @@ class Department(models.Model):
     description = models.CharField(max_length=255)
     # 创建时间
     create_time = models.DateTimeField(auto_now_add=True)
+    # 排序
+    sort = models.IntegerField(default=1)
     # 部门状态
     status = models.IntegerField(default=1)
     # 上级部门
