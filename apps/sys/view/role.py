@@ -16,6 +16,8 @@ from apps.sys.utils import AuthBearer
 from utils.schema.base import api_schema
 from casbin_adapter.enforcer import enforcer
 
+from utils.schema.paginate import api_paginate
+
 
 router = Router()
 
@@ -37,9 +39,9 @@ def create_roles(request, payload: RoleIn):
 @router.get(
     "",
     response=list[RoleOut],
-    auth=AuthBearer([("sys:role:info", "x")]),
+    auth=AuthBearer([("sys:role:list", "x")]),
 )
-@api_schema
+@api_paginate
 def get_role_info_list(request):
     """角色列表接"""
 
@@ -49,7 +51,7 @@ def get_role_info_list(request):
 @router.get(
     "/options",
     response=list[RoleOptionOut],
-    auth=AuthBearer([("sys:role:info", "x")]),
+    auth=AuthBearer([("sys:role:list", "x")]),
 )
 @api_schema
 def get_role_option_list(request):
