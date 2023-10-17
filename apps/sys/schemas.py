@@ -162,7 +162,7 @@ class UserCreateIn(UserBase):
     # 用户名
     username: str
     # 密码
-    password: str
+    password: str = "password"
     # 部门外键 (关联到部门模型)
     dept_id: int
     # 角色外键 (关联到角色模型)
