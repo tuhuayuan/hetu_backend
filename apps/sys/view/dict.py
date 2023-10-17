@@ -132,6 +132,7 @@ def get_dictdata_list(request, type_code: str = None, keywords: str = None):
     response=list[DictDataOptionOut],
     auth=AuthBearer([("sys:dict:data:options", "x")]),
 )
+@api_schema
 def get_dictdata_option_list(request, type_code: str):
     """获取字典选项列表"""
 
