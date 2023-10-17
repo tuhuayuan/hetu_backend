@@ -23,9 +23,9 @@ class Command(BaseCommand):
             )
             v.rw = True
             v.local = False
-            if row["变量类型"] == "整型":
+            if row["变量类型"] == "整数":
                 v.type = "I"
-            elif row["变量类型"] == "浮点":
+            elif row["变量类型"] == "浮点数":
                 v.type = "F"
             else:
                 v.type = "B"
