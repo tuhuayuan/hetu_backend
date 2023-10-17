@@ -84,7 +84,7 @@ def get_menu_router_tree(request):
         meta = MenuTreeRouterOut.RouterMeta(
             title=menu.name,
             icon=menu.icon,
-            hidden=menu.visible,
+            hidden=not bool(menu.visible),
             roles=roles,
             keep_alive=True,
         )
