@@ -37,9 +37,10 @@ ALLOWED_HOSTS = ["host.docker.internal", "localhost", "127.0.0.1", "hetu-api"]
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.staticfiles",
-    "casbin_adapter.apps.CasbinAdapterConfig",
-    "apps.scada",
+    
     "apps.sys",
+    "apps.scada",
+    "casbin_adapter.apps.CasbinAdapterConfig",
 ]
 
 # 安装的中间件

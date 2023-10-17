@@ -8,11 +8,6 @@ from django.core.exceptions import PermissionDenied
 from ninja.security import HttpBearer
 
 from apps.sys.models import User
-from apps.sys.rolemanager import RoleManager
-
-# 设置角色管理器
-# enforcer.set_role_manager(RoleManager())
-# enforcer.load_policy()
 
 
 def get_password(password: str) -> str:
@@ -44,8 +39,6 @@ class AuthBearer(HttpBearer):
         super().__init__()
 
     def authenticate(self, request, token):
-        enforcer.set_role_manager(RoleManager())
-        enforcer.load_policy()
 
         try:
             login_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
@@ -53,6 +46,8 @@ class AuthBearer(HttpBearer):
             # 无需权限控制
             if not self._perms:
                 return login_token
+
+            enforcer.load_policy()
 
             # 只需要满足任意一项配置的权限
             for p in self._perms:

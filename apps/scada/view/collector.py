@@ -28,7 +28,7 @@ supervisor_tpl = Template(
 [program:$process_name]
 command=$command
 environment=PYTHONPATH=/app/src,MODULE_NUMBER="$module_number",MODULE_SECRET="$module_secret",MODULE_URL="$module_url",RANDOM_PORT=$port,HOST="$host",ADVERTISE="$advertise"
-autostart=false
+autorestart=unexpected
 """
 )
 

@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class AuthConfig(AppConfig):
@@ -6,5 +7,6 @@ class AuthConfig(AppConfig):
     name = "apps.sys"
 
     def ready(self) -> None:
-        pass
+        from apps.sys.rolemanager import RoleManager
+        setattr(settings, 'CASBIN_ROLE_MANAGER', RoleManager())
         

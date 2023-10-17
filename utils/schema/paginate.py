@@ -28,7 +28,7 @@ class BasePagination:
         """分页请求参数"""
 
         limit: int = Field(settings.PAGINATION_PER_PAGE, ge=1)
-        offset: int = Field(0, ge=0)
+        page: int = Field(1, ge=1)
 
     class Output(Schema):
         """分页数据"""
@@ -37,10 +37,12 @@ class BasePagination:
         count: int
 
     def paginate_queryset(self, queryset: QuerySet, pagination: Any) -> None:
-        offset = pagination.offset
+        page = pagination.page
         limit: int = pagination.limit
+        start = (page - 1) * limit
+        end = start + limit
         return {
-            "items": queryset[offset : offset + limit],
+            "items": queryset[start:end],
             "count": self._items_count(queryset),
         }
 
@@ -72,7 +74,7 @@ def _inject_pagination(func: Callable) -> Callable:
         result = paginator.paginate_queryset(items, pagination=pagination_params)
         result[paginator.items_attribute] = list(result[paginator.items_attribute])
         return BaseSchemaOut(status="success", data=result)
-    
+
     # 添加分页参数
     view_with_pagination._ninja_contribute_args = [  # type: ignore
         (
