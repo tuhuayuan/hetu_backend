@@ -6,7 +6,7 @@ authors = ["Huayuan Tu <tuhuayuan@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "<3.13,>=3.9"
 django = "^4.2.6"
 django-ninja = "^0.22.2"
 django-environ = "^0.11.2"
@@ -20,6 +20,7 @@ captcha = "^0.5.0"
 casbin = "^1.31.2"
 casbin-django-orm-adapter = "^1.1.2"
 pyyaml = "^6.0.1"
+pandas = "^2.1.1"
 
 
 [build-system]
