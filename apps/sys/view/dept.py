@@ -133,4 +133,4 @@ def delete_dept(request, dept_id: int):
 
     d = get_object_or_404(Department, id=dept_id)
     d.delete()
-    return d
+    return 'Ok'
