@@ -53,9 +53,9 @@ def get_module_info(request, module_id: int):
     module = get_object_or_404(Module, id=module_id)
 
     # 获取巨控信息
-    client = get_grm_client(module)
     out = ModuleInfoOut.from_orm(module)
     try:
+        client = get_grm_client(module)
         out.info = client.info()
     except GrmError:
         # 模块信息获取不到
