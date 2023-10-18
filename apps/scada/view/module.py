@@ -57,7 +57,7 @@ def get_module_info(request, module_id: int):
     try:
         client = get_grm_client(module)
         out.info = client.info()
-    except GrmError:
+    except Exception:
         # 模块信息获取不到
         pass
     return out
