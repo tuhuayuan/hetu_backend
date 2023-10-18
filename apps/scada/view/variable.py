@@ -159,6 +159,7 @@ def get_variable_group_list(request, module_id: int, keywords: str = None):
     response=VariableOut,
     auth=AuthBearer([("scada:variable:update", "x")]),
 )
+@api_schema
 def update_variable(request, variable_id: int, payload: VariableUpdateIn):
     """更新变量信息"""
 
