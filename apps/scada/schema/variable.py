@@ -42,6 +42,10 @@ class VariableOptionOut(Schema):
     name: str
     # 变量组
     group: str
+    # 变量类型 I/F/B
+    type: str
+    # 变量读写
+    rw: bool = False
 
 
 class VariableIn(VariableBase):
