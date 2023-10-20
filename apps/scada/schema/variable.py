@@ -82,6 +82,8 @@ class ReadValueOut(Schema):
     name: str
     # 变量类型
     type: str = ""
+    # 变量读写
+    rw: bool = False
     # 列表值
     values: list[Value] = []
     # 错误状态
