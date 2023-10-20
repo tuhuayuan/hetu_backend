@@ -204,6 +204,7 @@ def write_local_var(variable: Variable, payload: WriteValueIn):
     response=list[WriteValueOut],
     auth=AuthBearer([("scada:variable:values:write", "x")]),
 )
+@api_schema
 def update_variable_values(request, payload: list[WriteValueIn]):
     """写模块变量接口"""
 
