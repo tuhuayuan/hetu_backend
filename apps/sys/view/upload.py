@@ -33,10 +33,10 @@ def upload_file(request, resource: str, file: UploadedFile = File(...)):
 
     # 保存文件
     file_name = os.path.join(upload_path, file.name)
-    with open(file_name, 'wb') as destination:
+    with open(file_name, "wb") as destination:
         destination.write(file_content)
 
-    return "Ok"
+    return f"/{resource}/{file.name}"
 
 
 @router.get("/{resource}/{file_name}")
@@ -54,11 +54,11 @@ def get_resource_file(request, resource: str, file_name: str):
     mime_type, _ = mimetypes.guess_type(file_path)
 
     # 返回文件响应
-    with open(file_path, 'rb') as file:
+    with open(file_path, "rb") as file:
         response = HttpResponse(file, content_type=mime_type)
-        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
         return response
-    
+
 
 @router.get("/{resource}", response=list[str])
 @api_paginate
@@ -67,8 +67,8 @@ def get_resource_files(request, resource: str):
 
     resource_path = os.path.join(settings.UPLOAD_ROOT, resource)
     if not os.path.exists(resource_path):
-        raise HttpError(404, 'Resource not found')
-    
+        raise HttpError(404, "Resource not found")
+
     files = []
     for file_name in os.listdir(resource_path):
         if os.path.isfile(os.path.join(resource_path, file_name)):
