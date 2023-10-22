@@ -4,6 +4,7 @@ import os
 
 from django.conf import settings
 from django.http import HttpResponse
+from django.urls import reverse_lazy
 from ninja import File, Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
@@ -40,7 +41,7 @@ def upload_file(request, resource: str, file: UploadedFile = File(...)):
 
 
 @router.get("/{resource}/{file_name}")
-def get_resource_file(request, resource: str, file_name: str):
+def get_static_resource(request, resource: str, file_name: str):
     """获取资源文件"""
 
     # 将资源路径和文件名拼接为绝对路径
@@ -76,3 +77,33 @@ def get_resource_files(request, resource: str):
             files.append(file_url)
 
     return files
+
+
+@router.get("", response=str)
+def get_resource_url(request, resource_path: str):
+    """获取资源链接"""
+
+    try:
+        # 解析资源路径和文件名
+        parts = resource_path.split("/", 2)
+        resource = parts[1]
+        file_name = parts[2]
+    except:
+        raise HttpError(400, "Resource path error.")
+    
+    url = reverse_lazy(
+        "api-v1:get_static_resource",
+        kwargs={"resource": resource, "file_name": file_name},
+    )
+
+    # 获取请求的主机和端口信息
+    host = request.get_host()
+    port = request.get_port()
+
+    # 构建完整的包含端口号的 URL
+    if request.is_secure():
+        absolute_url = f"https://{host}:{port}{url}"
+    else:
+        absolute_url = f"http://{host}:{port}{url}"
+
+    return absolute_url
