@@ -80,6 +80,7 @@ def get_resource_files(request, resource: str):
 
 
 @router.get("", response=str)
+@api_schema
 def get_resource_url(request, resource_path: str):
     """获取资源链接"""
 
