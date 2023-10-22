@@ -106,5 +106,4 @@ def get_resource_url(request, resource_path: str):
         absolute_url = f"https://{host}{url}"
     else:
         absolute_url = f"http://{host}{url}"
-    request.ab
     return absolute_url
