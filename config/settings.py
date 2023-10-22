@@ -25,7 +25,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 APPS_DIR = BASE_DIR / "apps"
 
 # 上传文件目录
-UPLOAD_ROOT = BASE_DIR / "resource/uploads"
+UPLOAD_ROOT = env("UPLOAD_ROOT")
 
 # 密钥
 SECRET_KEY = env("SECRET_KEY")
