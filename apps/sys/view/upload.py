@@ -103,8 +103,8 @@ def get_resource_url(request, resource_path: str):
 
     # 构建完整的包含端口号的 URL
     if request.is_secure():
-        absolute_url = f"https://{host}:{port}{url}"
+        absolute_url = f"https://{host}{url}"
     else:
-        absolute_url = f"http://{host}:{port}{url}"
-
+        absolute_url = f"http://{host}{url}"
+    request.ab
     return absolute_url
