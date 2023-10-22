@@ -3,7 +3,6 @@ from datetime import datetime
 from enum import Enum
 
 from ninja import Schema
-from pydantic import validator
 
 
 class RoleBase(Schema):
@@ -18,11 +17,12 @@ class RoleBase(Schema):
     # 排序
     sort: int
 
-    @validator('code')
     def validate_code(cls, v):
-        pattern = r'^[A-Z][A-Z_]*$'
+        pattern = r"^[A-Z][A-Z_]*$"
         if not re.match(pattern, v):
-            raise ValueError('Code must start with an uppercase letter and can only contain uppercase letters and underscores.')
+            raise ValueError(
+                "Code must start with an uppercase letter and can only contain uppercase letters and underscores."
+            )
         return v
 
 
@@ -168,7 +168,6 @@ class UserCreateIn(UserBase):
     # 角色外键 (关联到角色模型)
     role_ids: list[int]
 
-    @validator("username")
     def validate_username(cls, v):
         pattern = r"^[a-z][a-z0-9_]*$"
         if not re.match(pattern, v):
@@ -415,3 +414,4 @@ class MenuTreeRouterOut(Schema):
     meta: RouterMeta | None
     # 子路由列表
     children: list["MenuTreeRouterOut"] = None
+
