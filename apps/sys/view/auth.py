@@ -21,7 +21,7 @@ router = Router()
 @api_schema
 def captcha(request):
     # 生成随机的4个字符验证码
-    captcha_text = "".join(random.choices(string.ascii_letters + string.digits, k=4))
+    captcha_text = "".join(random.choices(string.digits, k=4))
 
     # 使用captcha库生成验证码图片
     image = ImageCaptcha()
