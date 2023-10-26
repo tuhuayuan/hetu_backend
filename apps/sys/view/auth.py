@@ -63,3 +63,9 @@ def login(request, payload: LoginIn):
         expires=expires,
     )
     return out
+
+
+@router.delete("/logout", response=str)
+@api_schema
+def logout(request):
+    return 'ok'
