@@ -5,7 +5,13 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 
 from apps.scada.models import Module
-from apps.scada.schema.module import ModuleIn, ModuleInfoOut, ModuleOptionOut, ModuleOut, ModuleUpdateIn
+from apps.scada.schema.module import (
+    ModuleIn,
+    ModuleInfoOut,
+    ModuleOptionOut,
+    ModuleOut,
+    ModuleUpdateIn,
+)
 from apps.scada.utils.grm.client import GrmError
 from apps.scada.utils.pool import get_grm_client
 from apps.sys.utils import AuthBearer
@@ -35,10 +41,13 @@ def create_module(request, payload: ModuleIn):
     auth=AuthBearer([("scada:module:list", "x")]),
 )
 @api_schema
-def get_module_option_list(request):
+def get_module_option_list(request, site_id: int = None):
     """获取选项列表"""
+    modules = Module.objects.all()
+    if site_id:
+        modules = modules.filter(site_id=site_id)
 
-    return Module.objects.all()
+    return modules.all()
 
 
 @router.get(
@@ -69,7 +78,7 @@ def get_module_info(request, module_id: int):
     auth=AuthBearer([("scada:module:list", "x")]),
 )
 @api_paginate
-def get_module_list(request, keywords: str = None):
+def get_module_list(request, keywords: str = None, site_id: int = None):
     """获取模块列表"""
 
     modules = Module.objects.all()
@@ -78,6 +87,9 @@ def get_module_list(request, keywords: str = None):
         modules = modules.filter(
             Q(name__icontains=keywords) | Q(module_number__icontains=keywords)
         )
+    if site_id:
+        modules = modules.filter(site_id=site_id)
+
     return modules.all()
 
 

@@ -9,6 +9,8 @@ from apps.scada.utils.grm.schemas import GrmModuleInfo
 class ModuleIn(Schema):
     """创建模块输入"""
 
+    # 站点ID
+    site_id: int
     # 名称
     name: str
     # 巨控ID
@@ -43,6 +45,8 @@ class ModuleOut(Schema):
     module_url: str
     # 最新修改时间
     updated_at: datetime
+    # 站点id
+    site_id: int
 
 
 class ModuleOptionOut(Schema):
@@ -54,6 +58,8 @@ class ModuleOptionOut(Schema):
     name: str
     # 模块编号
     module_number: str
+    # 站点id
+    site_id: int
 
 
 class ModuleInfoOut(ModuleOut):

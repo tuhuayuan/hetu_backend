@@ -1,6 +1,27 @@
 from django.db import models
 
 
+class Site(models.Model):
+    """站点模型"""
+
+    # 站点名称
+    name = models.CharField(max_length=255, unique=True)
+    # 联系人姓名
+    contact = models.CharField(max_length=255)
+    # 联系人手机号码
+    mobile = models.CharField(max_length=255)
+    # 站点状态，可以是整数或其他适当的数据类型
+    status = models.IntegerField(default=1)
+    # 经度
+    longitude = models.FloatField(default=114.305215)
+    # 纬度
+    latitude = models.FloatField(default=30.592849)
+    # 记录站点信息创建的日期和时间
+    create_time = models.DateTimeField(auto_now_add=True)
+    # 备注信息，可以为空
+    remark = models.CharField(max_length=255, null=True)
+
+
 class Module(models.Model):
     """数据模块模型"""
 
@@ -14,6 +35,8 @@ class Module(models.Model):
     module_url = models.CharField(max_length=255)
     # 修改日期
     updated_at = models.DateTimeField(auto_now=True, auto_created=True)
+    # 所属站点
+    site = models.ForeignKey(Site, on_delete=models.PROTECT, null=True)
 
     def __str__(self) -> str:
         return f"Module: {self.name}"
@@ -110,27 +133,6 @@ class Notify(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.level})"
-
-
-class Site(models.Model):
-    """站点模型"""
-
-    # 站点名称
-    name = models.CharField(max_length=255, unique=True)
-    # 联系人姓名
-    contact = models.CharField(max_length=255)
-    # 联系人手机号码
-    mobile = models.CharField(max_length=255)
-    # 站点状态，可以是整数或其他适当的数据类型
-    status = models.IntegerField(default=1)
-    # 经度
-    longitude = models.FloatField(default=114.305215)
-    # 纬度
-    latitude = models.FloatField(default=30.592849)
-    # 记录站点信息创建的日期和时间
-    create_time = models.DateTimeField(auto_now_add=True)
-    # 备注信息，可以为空
-    remark = models.CharField(max_length=255, null=True)
 
 
 class Graph(models.Model):

@@ -4,7 +4,7 @@ from enum import Enum
 from ninja import Schema
 
 
-class NofifyLevel(str, Enum):
+class NotifyLevel(str, Enum):
     """通知等级"""
 
     DEFAULT = "default"
@@ -51,7 +51,7 @@ class RuleIn(Schema):
     # 规则类型
     alert_type: str
     # 警告类型
-    alert_level: NofifyLevel = NofifyLevel.DEFAULT
+    alert_level: NotifyLevel = NotifyLevel.DEFAULT
     # 阈值
     threshold: float = 0.0
     # 状态值
@@ -70,7 +70,7 @@ class NotifyOut(Schema):
     # 外部ID
     external_id: str
     # 通知等级
-    level: NofifyLevel = NofifyLevel.DEFAULT
+    level: NotifyLevel = NotifyLevel.DEFAULT
     # 标题
     title: str
     # 内容

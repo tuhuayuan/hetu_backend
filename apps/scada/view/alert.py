@@ -67,7 +67,10 @@ def build_annotations(r: Rule) -> dict[str, Any]:
     """构建注解"""
 
     return {
-        "details": "",
+        "site_id": r.variable.module.site.id,
+        "module_id": r.variable.module.id,
+        "variable_id": r.variable.id,
+        "rule_id": r.id,
     }
 
 
@@ -271,9 +274,11 @@ def create_notify(request: HttpRequest):
 
         # 构造title
         title = (
-            labels["module_number"]
+            annos["site_id"]
             + "::"
-            + labels["variable_name"]
+            + annos["module_id"]
+            + "::"
+            + annos["variable_id"]
             + "::"
             + labels["alertname"]
             + "::"
@@ -303,13 +308,16 @@ def create_notify(request: HttpRequest):
 )
 @api_paginate
 def get_notify_list(
-    request, module_number: str, variable_name: str = None, ack: bool = None
+    request, site_id: int, module_id: int = None, variable_id: int = None, ack: bool = None
 ):
     """列出模块通知"""
 
-    filter_title = module_number + "::"
-    if variable_name:
-        filter_title += variable_name + "::"
+    filter_title = str(site_id) + "::"
+    if module_id:
+        filter_title += str(module_id) + "::"
+
+    if variable_id:
+        filter_title += str(variable_id) + "::"
 
     notifies = Notify.objects.filter(title__startswith=filter_title)
 
