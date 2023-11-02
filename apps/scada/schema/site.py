@@ -44,6 +44,12 @@ class SiteOptionOut(Schema):
     id: int
     # 名称
     name: str
+    # 站点状态
+    status: int = 1
+    # 默认武汉市的经度
+    longitude: float = 114.305215
+    # 默认武汉市的纬度
+    latitude: float = 30.592849
 
 
 class STATIC_METHOD(str, Enum):
