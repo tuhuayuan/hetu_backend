@@ -164,3 +164,24 @@ class Collector(models.Model):
     interval = models.IntegerField(default=5)
     # 请求超时
     timeout = models.IntegerField(default=3)
+
+
+STATIC_METHOD = (
+    ("sum", "求和"),
+    ("avg", "平均"),
+)
+
+class SiteStatistic(models.Model):
+    """站点统计对象"""
+
+    # 统计量名称
+    name = models.CharField(max_length=255)
+    # 统计方法
+    method = models.CharField(max_length=255, choices=LEVEL_CHOICES)
+    # 统计对象
+    variables = models.ManyToManyField(Variable)
+    # 所属站点
+    site = models.ForeignKey(Site, on_delete=models.PROTECT)
+
+    class Meta:
+        unique_together = [['name', 'site']]

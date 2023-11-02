@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from ninja import Schema
 
 
@@ -16,9 +17,9 @@ class SiteBase(Schema):
     # 备注信息，可以为空
     remark: str | None
     # 默认武汉市的经度
-    longitude: float = 114.305215 
+    longitude: float = 114.305215
     # 默认武汉市的纬度
-    latitude: float = 30.592849    
+    latitude: float = 30.592849
 
 
 class SiteIn(SiteBase):
@@ -43,3 +44,43 @@ class SiteOptionOut(Schema):
     id: int
     # 名称
     name: str
+
+
+class STATIC_METHOD(str, Enum):
+    """统计类型"""
+
+    SUM = "sum"
+    AVG = "avg"
+
+
+class SiteStatisticBase(Schema):
+    """统计对象基础结构"""
+
+    # 统计名
+    name: str
+    # 统计类型
+    method: STATIC_METHOD = STATIC_METHOD.SUM
+    # 统计对象
+    variable_ids: list[int] = []
+
+
+class SiteStatisticIn(SiteStatisticBase):
+    """统计对象创建结构"""
+
+    pass
+
+
+class SiteStatisticOut(SiteStatisticBase):
+    """统计对象选项返回值"""
+
+    # 编号
+    id: int
+
+
+class SiteStatisticValueOut(SiteStatisticOut):
+    """统计对象返回结构"""
+
+    # 统计值
+    value: float = 0
+    # 统计的时间戳
+    timestamp: float = 0
