@@ -155,7 +155,11 @@ def get_statistic_value(
             site_id=site_id, name=statistic_name
         ).first()
         if not statistic:
-            raise HttpError(404, "找不到统计量")
+            # 通过名字找不到统计量就直接返回0
+            return SiteStatisticValueOut(
+                id=-1,
+                name=statistic_name
+            )
     else:
         raise HttpError(400, "指定statistic_id或指定statistic_name")
 
