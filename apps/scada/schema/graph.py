@@ -12,6 +12,8 @@ class GraphBase(Schema):
     data: str = ""
     # 备注信息，可以为空
     remark: str | None
+    # 排序
+    order: int = 0
     # 站点ID
     site_id: int
 

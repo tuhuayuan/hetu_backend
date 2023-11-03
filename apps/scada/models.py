@@ -148,6 +148,8 @@ class Graph(models.Model):
     data = models.TextField()
     # 备注信息，可以为空
     remark = models.CharField(max_length=255, null=True)
+    # 排序
+    order = models.IntegerField(default=1)
     # 站点
     site = models.ForeignKey(Site, on_delete=models.PROTECT)
 
@@ -185,3 +187,18 @@ class SiteStatistic(models.Model):
 
     class Meta:
         unique_together = [['name', 'site']]
+
+
+class SiteVideoSource(models.Model):
+    """站点监控视频源"""
+
+    # 设备ID
+    device_id = models.CharField(max_length=255)
+    # 设备类别
+    device_type =  models.CharField(max_length=255)
+    # 设备通道
+    channel = models.CharField(max_length=255)
+    # 状态字段
+    status = models.IntegerField(default=1)
+    # 所属站点
+    site = models.ForeignKey(Site, on_delete=models.PROTECT)

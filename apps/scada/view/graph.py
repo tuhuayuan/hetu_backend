@@ -54,7 +54,7 @@ def get_graph_list(request, site_id: int = None, keywords: str = None):
     if keywords:
         gs = gs.filter(Q(name__icontains=keywords))
 
-    return gs
+    return gs.order_by('-order')
 
 
 @router.get(

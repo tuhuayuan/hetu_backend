@@ -6,7 +6,7 @@ from ninja.errors import HttpError
 from ninja import Router
 import requests
 
-from apps.scada.models import Site, SiteStatistic
+from apps.scada.models import Site, SiteStatistic, SiteVideoSource
 from apps.scada.schema.site import (
     SiteIn,
     SiteOptionOut,
@@ -14,7 +14,11 @@ from apps.scada.schema.site import (
     SiteStatisticIn,
     SiteStatisticOut,
     SiteStatisticValueOut,
+    SiteVideoSourceIn,
+    SiteVideoSourceOptionOut,
+    SiteVideoSourceOut,
 )
+from apps.scada.utils.ys import get_capture_url, get_video_url
 from apps.sys.utils import AuthBearer
 from utils.schema.base import api_schema
 from utils.schema.paginate import api_paginate
@@ -156,10 +160,7 @@ def get_statistic_value(
         ).first()
         if not statistic:
             # 通过名字找不到统计量就直接返回0
-            return SiteStatisticValueOut(
-                id=-1,
-                name=statistic_name
-            )
+            return SiteStatisticValueOut(id=-1, name=statistic_name)
     else:
         raise HttpError(400, "指定statistic_id或指定statistic_name")
 
@@ -251,3 +252,63 @@ def delete_statistic(request, statistic_id: int):
     statistic.delete()
 
     return "Ok"
+
+
+@router.post(
+    "/{site_id}/videosource",
+    response=SiteVideoSourceOptionOut,
+    auth=AuthBearer([("scada:site:create", "x")]),
+)
+@api_schema
+def create_videosource(request, site_id: int, payload: SiteVideoSourceIn):
+    """给站点添加视频源"""
+
+    svs = SiteVideoSource(site_id=site_id, **payload.dict())
+    svs.save()
+    return svs
+
+
+@router.get(
+    "/{site_id}/videosource",
+    response=list[SiteVideoSourceOptionOut],
+    auth=AuthBearer([("scada:site:get", "x")]),
+)
+@api_schema
+def list_videosource(request, site_id: int):
+    """列出视频源"""
+
+    return SiteVideoSource.objects.filter(site_id=site_id).all()
+
+
+@router.get(
+    "/videosource/{videosource_id}",
+    response=SiteVideoSourceOut,
+    auth=AuthBearer([("scada:site:get", "x")]),
+)
+@api_schema
+def get_videosource(request, videosource_id: int):
+    """调用视频源接口获取播放地址和截图"""
+
+    svs = get_object_or_404(SiteVideoSource, id=videosource_id)
+    output = SiteVideoSourceOut.from_orm(svs)
+
+    try:
+        output.capture = get_capture_url(svs.device_id, int(svs.channel))
+        output.video_source = get_video_url(svs.device_id, int(svs.channel))
+    except Exception as e:
+        raise HttpError(500, f"获取视频截图或播放地址错误: {e}")
+  
+    return output
+
+@router.delete(
+    "/videosource/{videosource_id}",
+    response=str,
+    auth=AuthBearer([("scada:site:create", "x")]),
+)
+@api_schema
+def delete_videosource(request, videosource_id: int):
+    """删除通道"""
+
+    svs = get_object_or_404(SiteVideoSource, id=videosource_id)
+    svs.delete()
+    return 'Ok'
