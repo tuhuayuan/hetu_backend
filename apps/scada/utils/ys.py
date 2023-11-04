@@ -5,43 +5,28 @@ import requests
 from functools import wraps
 
 
-ACCESS_TOKEN = ''
-
-
-def with_token(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            # 假设resp_json是一个字典
-            if str(e) == "10002":
-                global ACCESS_TOKEN
-                ACCESS_TOKEN = get_accecc_token()
-                return func(*args, **kwargs)
-            else:
-                raise Exception(f"ys error_code: {e}")
-
-    return wrapper
-
-
-def with_cache(cache_time=60*60):
+def with_cache(cache_time=60*60, device_serial='ys', channel_no=0, action=''):
     def decorator(func):
         @wraps(func)
-        def wrapper(device_serial, channel_no, *args, **kwargs):
-            cache_key = f"{device_serial}_{channel_no}"  # 使用 device_serial 和 channel_no 作为缓存的键
+        def wrapper(*args, **kwargs):
+            key0 = kwargs.get('device_serial', device_serial)
+            key1 = kwargs.get('channel_no', channel_no)
+            key2 = kwargs.get('action', action)
+
+            cache_key = f"{key0}_{key1}_{key2}"  # 使用 device_serial 和 channel_no 作为缓存的键
             cached_data = cache.get(cache_key)
 
             if cached_data:
                 return json.loads(cached_data)
             else:
-                result = func(device_serial, channel_no, *args, **kwargs)
+                result = func(*args, **kwargs)
                 cache.set(cache_key, json.dumps(result), timeout=cache_time)  # 设置缓存时间
                 return result
         return wrapper
     return decorator
 
 
+@with_cache(cache_time=60*60*24)
 def get_accecc_token() -> str:
     """获取访问TOKEN"""
 
@@ -65,14 +50,14 @@ def get_accecc_token() -> str:
         raise Exception(resp_json["code"])
 
 
-@with_token
-@with_cache(60)
-def get_capture_url(device_serial: str, channel_no: int = 1, quality: int = 3) -> str:
+@with_cache(60, action='capture')
+def get_capture_url(device_serial: str = '', channel_no: int = 1, quality: int = 3) -> str:
     """获取通道截图"""
 
     url = "https://open.ys7.com/api/lapp/device/capture"
+    token = get_accecc_token()
 
-    payload = f"accessToken={ACCESS_TOKEN}&deviceSerial={device_serial}&channelNo={channel_no}&quality={quality}"
+    payload = f"accessToken={token}&deviceSerial={device_serial}&channelNo={channel_no}&quality={quality}"
     headers = {
         "Accept": "*/*",
         "Connection": "keep-alive",
@@ -89,14 +74,14 @@ def get_capture_url(device_serial: str, channel_no: int = 1, quality: int = 3) -
         raise Exception(resp_json["code"])
 
 
-@with_token
-@with_cache(60*60)
-def get_video_url(device_serial: str, channel_no: int = 1) -> str:
+@with_cache(60*60, action='video')
+def get_video_url(device_serial: str = '', channel_no: int = 1, protocol=1) -> str:
     """获取视频播放地址"""
 
     url = "https://open.ys7.com/api/lapp/v2/live/address/get"
+    token = get_accecc_token()
 
-    payload = f"accessToken={ACCESS_TOKEN}&deviceSerial={device_serial}&channelNo={channel_no}&expireTime=604800&protocol=4"
+    payload = f"accessToken={token}&deviceSerial={device_serial}&channelNo={channel_no}&expireTime=604800&protocol={protocol}"
     headers = {
         "Connection": "keep-alive",
         "Content-Type": "application/x-www-form-urlencoded",

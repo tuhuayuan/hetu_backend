@@ -18,7 +18,7 @@ from apps.scada.schema.site import (
     SiteVideoSourceOptionOut,
     SiteVideoSourceOut,
 )
-from apps.scada.utils.ys import get_capture_url, get_video_url
+from apps.scada.utils.ys import get_capture_url, get_video_url, get_accecc_token
 from apps.sys.utils import AuthBearer
 from utils.schema.base import api_schema
 from utils.schema.paginate import api_paginate
@@ -293,12 +293,14 @@ def get_videosource(request, videosource_id: int):
     output = SiteVideoSourceOut.from_orm(svs)
 
     try:
-        output.capture = get_capture_url(svs.device_id, int(svs.channel))
-        output.video_source = get_video_url(svs.device_id, int(svs.channel))
+        output.capture = get_capture_url(device_serial=svs.device_id, channel_no=int(svs.channel))
+        output.video_source = get_video_url(device_serial=svs.device_id, channel_no=int(svs.channel))
+        output.token = get_accecc_token()
     except Exception as e:
         raise HttpError(500, f"获取视频截图或播放地址错误: {e}")
-  
+
     return output
+
 
 @router.delete(
     "/videosource/{videosource_id}",
@@ -311,4 +313,4 @@ def delete_videosource(request, videosource_id: int):
 
     svs = get_object_or_404(SiteVideoSource, id=videosource_id)
     svs.delete()
-    return 'Ok'
+    return "Ok"

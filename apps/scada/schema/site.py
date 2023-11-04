@@ -127,3 +127,5 @@ class SiteVideoSourceOut(SiteVideoSourceOptionOut):
     video_source: str = ''
     # 截图地址
     capture: str = ''
+    # 访问Token，根据类型不同可能需要
+    token: str = ''
