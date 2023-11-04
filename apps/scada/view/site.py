@@ -297,7 +297,8 @@ def get_videosource(request, videosource_id: int):
         output.video_source = get_video_url(device_serial=svs.device_id, channel_no=int(svs.channel))
         output.token = get_accecc_token()
     except Exception as e:
-        raise HttpError(500, f"获取视频截图或播放地址错误: {e}")
+        # raise HttpError(500, f"获取视频截图或播放地址错误: {e}")
+        pass
 
     return output
 
