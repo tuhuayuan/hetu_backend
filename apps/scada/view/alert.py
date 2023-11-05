@@ -269,8 +269,7 @@ def create_notify(request: HttpRequest):
 
         # 收到的是早期的消息则不管
         if last_one and notified_at <= last_one.notified_at:
-            # continue
-            pass
+            continue
 
         # 构造title
         title = (
