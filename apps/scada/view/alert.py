@@ -307,7 +307,11 @@ def create_notify(request: HttpRequest):
 )
 @api_paginate
 def get_notify_list(
-    request, site_id: int, module_id: int = None, variable_id: int = None, ack: bool = None
+    request,
+    site_id: int,
+    module_id: int = None,
+    variable_id: int = None,
+    ack: bool = None,
 ):
     """列出模块通知"""
 
@@ -324,6 +328,26 @@ def get_notify_list(
         notifies = notifies.filter(ack=ack)
 
     return notifies.order_by(("-notified_at")).all()
+
+
+@router.get(
+    "/notify/total",
+    response=int,
+    auth=AuthBearer([("scada:alert:notify:list", "x")]),
+)
+@api_schema
+def get_notify_total(request, site_id: int, module_id: int = None, ack: bool = None):
+    """获取总数"""
+    filter_title = str(site_id) + "::"
+    if module_id:
+        filter_title += str(module_id) + "::"
+
+    notifies = Notify.objects.filter(title__startswith=filter_title)
+
+    if ack != None:
+        notifies = notifies.filter(ack=ack)
+    
+    return notifies.count()
 
 
 @router.patch(
