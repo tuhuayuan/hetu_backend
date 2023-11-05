@@ -320,7 +320,7 @@ def get_notify_list(
 
     notifies = Notify.objects.filter(title__startswith=filter_title)
 
-    if ack:
+    if ack != None:
         notifies = notifies.filter(ack=ack)
 
     return notifies.order_by(("-notified_at")).all()
