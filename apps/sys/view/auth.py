@@ -47,8 +47,8 @@ def login(request, payload: LoginIn):
 
     # 先检测验证码
     if get_captcha(payload.verify_code) != payload.verify_code_key:
-        if not settings.DEBUG:
-            raise HttpError(401, "验证码错误")
+        # if not settings.DEBUG:
+        raise HttpError(401, "验证码错误")
 
     u = User.objects.filter(
         username=payload.username, password=get_password(payload.password), status=1

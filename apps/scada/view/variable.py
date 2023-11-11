@@ -13,7 +13,7 @@ from prometheus_client import (
     push_to_gateway,
 )
 
-from apps.scada.models import Module, Variable
+from apps.scada.models import Variable
 from apps.scada.schema.variable import (
     VariableGroupOut,
     VariableIn,
@@ -26,6 +26,7 @@ from apps.scada.schema.variable import (
 )
 from apps.scada.utils.grm.schemas import GrmVariable
 from apps.scada.utils.pool import get_grm_client
+from apps.scada.utils.promql import PrometheusQueryError, query_prometheus
 from apps.sys.utils import AuthBearer
 from utils.schema.base import api_schema
 from utils.schema.paginate import api_paginate
@@ -34,74 +35,91 @@ router = Router()
 
 
 @router.get(
+    "/range",
+    response=ReadValueOut,
+    auth=AuthBearer([("scada:variable:values:read", "x")]),
+)
+@api_schema
+def read_range(
+    request,
+    variable_id: int,
+    offset: str = Query(default=None, regex=r"^\d+[mshd]$"),
+    duration: str = Query(default="1h", regex=r"^\d+[msh]$"),
+):
+    var = get_object_or_404(Variable, id=variable_id)
+    query_str = "grm_" + var.module.module_number + "_gauge"
+    query_str += '{name="' + var.name + '"}'
+    query_str += f"[{duration}]"
+
+    # 可选的偏移参数
+    if offset:
+        query_str += f" offset {offset}"
+
+    try:
+        query_data = query_prometheus(query_str)
+    except PrometheusQueryError as e:
+        raise HttpError(500, f"Prometheus Query Error: {e}")
+    except requests.RequestException as e:
+        raise HttpError(500, f"Request Error: {e}")
+
+    # 格式参考 https://prometheus.io/docs/prometheus/latest/querying/api/#expression-query-result-formats
+    values: list[ReadValueOut.Value] = []
+    out = ReadValueOut.from_orm(var)
+    for result in query_data["data"]["result"]:
+        for value_set in result["values"]:
+            values.append(
+                ReadValueOut.Value(timestamp=value_set[0], value=float(value_set[1]))
+            )
+        break
+    out.values = values
+    return out
+
+
+@router.get(
     "/values",
     response=list[ReadValueOut],
     auth=AuthBearer([("scada:variable:values:read", "x")]),
 )
 @api_schema
-def get_variable_values(
-    request,
-    variable_ids: list[int] = Query(default=[]),
-    offset: str = Query(default=None, regex=r"^\d+[mshd]$"),
-    duration: str = Query(default=None, regex=r"^\d+[msh]$"),
-):
+def read_values(request, variable_ids: list[int] = Query(default=[])):
     """批量读取变量值"""
 
-    vs = Variable.objects.filter(id__in=variable_ids).all()
+    vars = Variable.objects.filter(id__in=variable_ids)
+
+    # 获取给定 variable_ids 下每个 module_id 中的变量列表
+    grouped_vars = vars.select_related("module").values(
+        "module_id", "module__module_number"
+    ).distinct()
+
     outlist: list[ReadValueOut] = []
 
-    for v in vs:
-        query_str = "grm_" + v.module.module_number + "_gauge"
-        query_str += '{name="' + v.name + '"}'
+    # 数据是按模块存储，所以变量按模块获取
+    for entry in grouped_vars:
+        module_id = entry["module_id"]
+        module_number = entry["module__module_number"]
+        module_vars = vars.filter(module_id=module_id)
 
-        if duration:
-            query_str += f"[{duration}]"
+        query_str = "grm_" + module_number + "_gauge"
+        query_str += '{name=~"' + "|".join([v.name for v in module_vars]) + '"}'
 
-        if offset:
-            query_str += f" offset {offset}"
+        try:
+            query_data = query_prometheus(query_str)
+        except PrometheusQueryError as e:
+            raise HttpError(500, f"Prometheus Query Error: {e}")
+        except requests.RequestException as e:
+            raise HttpError(500, f"Request Error: {e}")
 
-        # 记得编码url参数
-        query_params = urlencode({"query": query_str})
-        query_resp = requests.get(
-            f"{settings.PROMETHEUS_URL}/api/v1/query?{query_params}",
-            timeout=(3, 5),
-        )
-
-        if query_resp.status_code != 200:
-            raise HttpError(500, f"tsdb error {query_resp.status_code}")
-
-        query_data = query_resp.json()
-        if query_data["status"] != "success":
-            raise HttpError(500, f'tsdb error {query_data["error"]}')
-
-        # 格式参考 https://prometheus.io/docs/prometheus/latest/querying/api/#expression-query-result-formats
-        result_type = query_data["data"]["resultType"]
-
-        # 单个输出值
-        out = ReadValueOut.from_orm(v)
-
-        # 遍历查询结果
-        for result in query_data["data"]["result"]:
-            if result_type == "vector":
-                # vector类型每个metric只有一个值
-                value = ReadValueOut.Value(
-                    timestamp=result["value"][0], value=float(result["value"][1])
-                )
-                out.values = [value]
-            else:
-                # matrix类型每个metric有多个值
-                values: list[ReadValueOut.Value] = []
-
-                for value_set in result["values"]:
-                    values.append(
-                        ReadValueOut.Value(
-                            timestamp=value_set[0], value=float(value_set[1])
-                        )
+        # 构建输出结构
+        for v in vars:
+            out = ReadValueOut.from_orm(v)
+            for result in query_data["data"]["result"]:
+                if result["metric"]["name"] == v.name:
+                    value = ReadValueOut.Value(
+                        timestamp=result["value"][0], value=float(result["value"][1])
                     )
-                out.values = values
-            break
-
-        outlist.append(out)
+                    out.values.append(value)
+                    break
+            outlist.append(out)
 
     return outlist
 
@@ -151,7 +169,7 @@ def get_variable_group_list(request, module_id: int, keywords: str = None):
     if keywords:
         gs = gs.filter(Q(group__icontains=keywords))
 
-    return gs.values('group').distinct()
+    return gs.values("group").distinct()
 
 
 @router.put(
