@@ -328,7 +328,7 @@ def get_activated_notifies(request, site_id: int):
         notifies.filter(
             external_id=OuterRef("external_id")  # 外部引用，对应于内部查询中的 external_id
         )
-        .order_by("-notified_at")
+        .order_by("-notified_at", "-id")
         .values("id")[:1]
     )
     result = Notify.objects.filter(
