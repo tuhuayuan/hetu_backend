@@ -1,10 +1,9 @@
 import fcntl
-import hashlib
 import json
 import os
 from datetime import datetime
 from typing import Any
-
+from django.db.models import Subquery, OuterRef
 import requests
 import yaml
 from dateutil.parser import parser
@@ -38,7 +37,7 @@ def build_expr(r: Rule) -> str:
         "hight_limit": "{metric_selector} > {threshold}",
         "low_limit": "{metric_selector} < {threshold}",
         "binary_state": "{metric_selector} == {state}",
-        "no_change": "changes({metric_selector}[{duration}]) == 0",
+        # "no_change": "changes({metric_selector}[{duration}]) == 0",
     }
 
     if r.alert_type in alert_exprs:
@@ -71,6 +70,7 @@ def build_annotations(r: Rule) -> dict[str, Any]:
         "module_id": r.variable.module.id,
         "variable_id": r.variable.id,
         "rule_id": r.id,
+        "value": "{{ $value }}",
     }
 
 
@@ -234,18 +234,15 @@ def create_notify(request: HttpRequest):
         status = alert["status"]
         annos = alert["annotations"]
         labels = alert["labels"]
+        figerprint = alert["fingerprint"]
 
-        # 计算外部ID
-        hasher = hashlib.sha1(
-            (
-                labels["module_number"] + labels["variable_name"] + labels["alertname"]
-            ).encode()
-        )
-        external_id = hasher.hexdigest()
+        # 默认指纹计算方式
+        external_id = figerprint
 
         # 统一通知的创建时间
         created_at = datetime.now(timezone.utc)
-        # 最后一条
+
+        # 同样指纹的最新一条通知
         last_one = (
             Notify.objects.filter(external_id=external_id)
             .order_by("-notified_at")
@@ -289,7 +286,7 @@ def create_notify(request: HttpRequest):
             external_id=external_id,
             level=level,
             title=title,
-            content="",
+            content=suffix_title,
             source="alertmanager",
             notified_at=notified_at,
             created_at=created_at,
@@ -306,28 +303,37 @@ def create_notify(request: HttpRequest):
     auth=AuthBearer([("scada:alert:notify:list", "x")]),
 )
 @api_paginate
-def get_notify_list(
-    request,
-    site_id: int,
-    module_id: int = None,
-    variable_id: int = None,
-    ack: bool = None,
-):
+def get_notifies(request, external_id: str):
     """列出模块通知"""
 
-    filter_title = str(site_id) + "::"
-    if module_id:
-        filter_title += str(module_id) + "::"
-
-    if variable_id:
-        filter_title += str(variable_id) + "::"
-
-    notifies = Notify.objects.filter(title__startswith=filter_title)
-
-    if ack != None:
-        notifies = notifies.filter(ack=ack)
+    notifies = Notify.objects.filter(external_id=external_id)
 
     return notifies.order_by(("-notified_at")).all()
+
+
+@router.get(
+    "/notify/activated",
+    response=list[NotifyOut],
+    auth=AuthBearer([("scada:alert:notify:list", "x")]),
+)
+@api_schema
+def get_activated_notifies(request, site_id: int):
+    """获取站点里面所有激活状态的预警"""
+    site_filter = str(site_id) + "::"
+
+    notifies = Notify.objects.filter(title__startswith=site_filter)
+    latest_record_ids = (
+        notifies.filter(
+            external_id=OuterRef("external_id")  # 外部引用，对应于内部查询中的 external_id
+        )
+        .order_by("-notified_at")
+        .values("id")[:1]
+    )
+    result = Notify.objects.filter(
+        id=Subquery(latest_record_ids), title__endswith="触发警告", ack=False
+    )
+
+    return result.all()
 
 
 @router.get(
@@ -346,7 +352,7 @@ def get_notify_total(request, site_id: int, module_id: int = None, ack: bool = N
 
     if ack != None:
         notifies = notifies.filter(ack=ack)
-    
+
     return notifies.count()
 
 
