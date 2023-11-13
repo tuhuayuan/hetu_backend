@@ -264,9 +264,11 @@ def create_notify(request: HttpRequest):
             level = "info"
             # pass
 
-        # 收到的是早期的消息则不管
+        # 重发的消息
         if last_one and notified_at <= last_one.notified_at:
-            continue
+            if not last_one.ack:
+                # 已经确认了要重新激活
+                continue
 
         # 构造title
         title = (
