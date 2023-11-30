@@ -14,8 +14,7 @@ class GraphBase(Schema):
     remark: str | None
     # 排序
     order: int = 0
-    # 站点ID
-    site_id: int
+    
 
 
 class GraphIn(GraphBase):
@@ -31,6 +30,8 @@ class GraphOut(GraphBase):
     id: int
     # 创建时间
     create_time: datetime
+    # 站点ID
+    site_id: int
 
 
 class GraphOptionOut(Schema):
@@ -40,3 +41,9 @@ class GraphOptionOut(Schema):
     id: int
     # 组态名称
     name: str
+    # 站点ID
+    site_id: int
+    # 排序
+    order: int = 0
+    # 状态字段，用于表示站点配置的状态
+    status: int = 1

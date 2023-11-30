@@ -2,7 +2,7 @@ from urllib.parse import urlencode
 
 import requests
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, F
 from django.shortcuts import get_object_or_404
 from ninja import Query, Router
 from ninja.errors import HttpError
@@ -13,7 +13,7 @@ from prometheus_client import (
     push_to_gateway,
 )
 
-from apps.scada.models import Variable
+from apps.scada.models import Module, Variable
 from apps.scada.schema.variable import (
     VariableGroupOut,
     VariableIn,
@@ -35,18 +35,24 @@ router = Router()
 
 
 @router.get(
-    "/range",
+    "/{site_id}/variable/{variable_id}/range",
     response=ReadValueOut,
-    auth=AuthBearer([("scada:variable:values:read", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:variable:values:read", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_schema
 def read_range(
     request,
+    site_id: int,
     variable_id: int,
     offset: str = Query(default=None, regex=r"^\d+[mshd]$"),
     duration: str = Query(default="1h", regex=r"^\d+[msh]$"),
 ):
-    var = get_object_or_404(Variable, id=variable_id)
+    var = get_object_or_404(Variable, id=variable_id, module__site_id=site_id)
     query_str = "grm_" + var.module.module_number + "_gauge"
     query_str += '{name="' + var.name + '"}'
     query_str += f"[{duration}]"
@@ -76,20 +82,31 @@ def read_range(
 
 
 @router.get(
-    "/values",
+    "/{site_id}/variable/values",
     response=list[ReadValueOut],
-    auth=AuthBearer([("scada:variable:values:read", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:variable:values:read", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_schema
-def read_values(request, variable_ids: list[int] = Query(default=[])):
+def read_values(
+    request,
+    site_id: int,
+    variable_ids: list[int] = Query(default=[]),
+):
     """批量读取变量值"""
 
-    vars = Variable.objects.filter(id__in=variable_ids)
+    vars = Variable.objects.filter(id__in=variable_ids, module__site_id=site_id)
 
     # 获取给定 variable_ids 下每个 module_id 中的变量列表
-    grouped_vars = vars.select_related("module").values(
-        "module_id", "module__module_number"
-    ).distinct()
+    grouped_vars = (
+        vars.select_related("module")
+        .values("module_id", "module__module_number")
+        .distinct()
+    )
 
     outlist: list[ReadValueOut] = []
 
@@ -125,29 +142,51 @@ def read_values(request, variable_ids: list[int] = Query(default=[])):
 
 
 @router.post(
-    "",
+    "/{site_id}/module/{module_id}/variable",
     response=VariableOut,
-    auth=AuthBearer([("scada:variable:create", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:variable:create", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def create_variable(request, payload: VariableIn):
+def create_variable(
+    request,
+    site_id: int,
+    module_id: int,
+    payload: VariableIn,
+):
     """创建变量"""
 
-    v = Variable(**payload.dict())
+    module = get_object_or_404(Module, id=module_id, site_id=site_id)
+    v = Variable(module_id=module.id, **payload.dict())
     v.save()
+    v.site_id=site_id
     return v
 
 
 @router.get(
-    "/options",
+    "/{site_id}/module/{module_id}/variable/options",
     response=list[VariableOptionOut],
-    auth=AuthBearer([("scada:variable:list", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:variable:list", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_schema
-def get_variable_option_list(request, module_id: int, group: str = None):
+def get_variable_option_list(
+    request,
+    site_id: int,
+    module_id: int,
+    group: str = None,
+):
     """获取模块的变量选项"""
 
-    vs = Variable.objects.filter(module_id=module_id)
+    vs = Variable.objects.filter(module_id=module_id, module__site_id=site_id)
 
     if group:
         vs = vs.filter(group=group)
@@ -156,36 +195,60 @@ def get_variable_option_list(request, module_id: int, group: str = None):
 
 
 @router.get(
-    "/groups",
-    response=list[VariableGroupOut],
-    auth=AuthBearer([("scada:variable:list", "x")]),
+    "/{site_id}/module/{module_id}/variable/groups",
+    response=list[str],
+    auth=AuthBearer(
+        [
+            ("scada:variable:list", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_schema
-def get_variable_group_list(request, module_id: int, keywords: str = None):
+def get_variable_group_list(
+    request,
+    site_id: int,
+    module_id: int,
+    keywords: str = None,
+):
     """获取变量组"""
 
-    gs = Variable.objects.filter(module_id=module_id)
+    gs = Variable.objects.filter(module_id=module_id, module__site_id=site_id)
 
     if keywords:
         gs = gs.filter(Q(group__icontains=keywords))
 
-    return gs.values("group").distinct()
+    return gs.values("group").distinct().values_list("group", flat=True)
 
 
 @router.put(
-    "/{variable_id}",
+    "/{site_id}/module/{module_id}/variable/{variable_id}",
     response=VariableOut,
-    auth=AuthBearer([("scada:variable:update", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:variable:update", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def update_variable(request, variable_id: int, payload: VariableUpdateIn):
+def update_variable(
+    request,
+    site_id: int,
+    module_id: int,
+    variable_id: int,
+    payload: VariableUpdateIn,
+):
     """更新变量信息"""
 
-    v = get_object_or_404(Variable, id=variable_id)
+    v = get_object_or_404(
+        Variable, id=variable_id, module_id=module_id, module__site_id=site_id
+    )
     v.type = payload.type
     v.rw = payload.rw
     v.details = payload.details
     v.save()
+    v.site_id =site_id
     return v
 
 
@@ -218,40 +281,48 @@ def write_local_var(variable: Variable, payload: WriteValueIn):
 
 
 @router.put(
-    "/values",
+    "/{site_id}/variable/values",
     response=list[WriteValueOut],
-    auth=AuthBearer([("scada:variable:values:write", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:variable:values:write", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def update_variable_values(request, payload: list[WriteValueIn]):
+def update_variable_values(
+    request,
+    site_id: int,
+    payload: list[WriteValueIn],
+):
     """写模块变量接口"""
 
-    vs = Variable.objects.filter(
-        id__in=[i.id for i in payload],
-        rw=True,
-    )
     outlist: list[WriteValueOut] = []
 
     # 逐个写入
     for p in payload:
         out = WriteValueOut(id=p.id)
-        v = Variable.objects.filter(id=p.id).first()
+        var = Variable.objects.filter(
+            id=p.id,
+            module__site_id=site_id,
+        ).first()
 
-        if not v:
+        if not var:
             out.error = 404
-        elif not v.rw:
+        elif not var.rw:
             out.error = 422
-        elif not v.local:
+        elif not var.local:
             # 获取客户端
-            client = get_grm_client(v.module)
+            client = get_grm_client(var.module)
 
             grm_write_list = [
                 GrmVariable(
-                    module_number=v.module.module_number,
-                    type=v.type,
-                    name=v.name,
+                    module_number=var.module.module_number,
+                    type=var.type,
+                    name=var.name,
                     value=p.value,
-                    group=v.group,
+                    group=var.group,
                 )
             ]
             try:
@@ -263,7 +334,7 @@ def update_variable_values(request, payload: list[WriteValueIn]):
         else:
             # 本地pushgateway变量
             try:
-                write_local_var(v, p)
+                write_local_var(var, p)
             except Exception as e:
                 out.error = 503
 
@@ -273,55 +344,83 @@ def update_variable_values(request, payload: list[WriteValueIn]):
 
 
 @router.get(
-    "/{variable_id}",
+    "/{site_id}/module/{module_id}/variable/{variable_id}",
     response=VariableOut,
-    auth=AuthBearer([("scada:variable:info", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:variable:info", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_schema
-def get_variable_info(request, variable_id: int):
+def get_variable_info(
+    request,
+    site_id: int,
+    module_id: int,
+    variable_id: int,
+):
     """获取变量信息"""
 
-    return get_object_or_404(Variable, id=variable_id)
+    var = get_object_or_404(
+        Variable, id=variable_id, module_id=module_id, module__site_id=site_id
+    )
+    var.site_id = site_id
+    return VariableOut.from_orm(var)
 
 
 @router.get(
-    "",
+    "/{site_id}/module/{module_id}/variable",
     response=list[VariableOut],
-    auth=AuthBearer([("scada:variable:list", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:variable:list", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_paginate
 def get_variable_list(
-    request, module_id: int = None, keywords: str = None, group: str = None
+    request, site_id: int, module_id: int, keywords: str = None, group: str = None
 ):
     """列出模块的所有变量"""
-    vs = Variable.objects.all()
-
-    if module_id:
-        vs = vs.filter(module_id=module_id)
+    fields = [field.name for field in Variable._meta.get_fields()]
+    fields.append("module__site_id")
+    vars = Variable.objects.filter(
+        module_id=module_id,
+        module__site_id=site_id,
+    ).annotate(site_id=F("module__site_id"))
 
     if group:
-        vs = vs.filter(group=group)
+        vars = vars.filter(group=group)
 
     if keywords:
-        vs = vs.filter(Q(name__icontains=keywords))
+        vars = vars.filter(Q(name__icontains=keywords))
 
-    return vs.all()
+    return vars.all()
 
 
 @router.delete(
-    "/{variable_id}",
+    "/{site_id}/module/{module_id}/variable/{variable_id}",
     response=str,
-    auth=AuthBearer([("scada:variable:delete", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:variable:delete", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def delete_variable(request, variable_id: int):
+def delete_variable(request, site_id: int, module_id: int, variable_id: int):
     """删除变量接口"""
 
-    v = get_object_or_404(Variable, id=variable_id)
+    var = get_object_or_404(
+        Variable, id=variable_id, module_id=module_id, module__site_id=site_id
+    )
 
     # 本地变量要从pushgateway删除
-    if v.local:
-        labels = {"name": v.name, "type": v.type, "local": "true"}
+    if var.local:
+        labels = {"name": var.name, "type": var.type, "local": "true"}
 
         delete_from_gateway(
             settings.PUSHGATEWAY_URL,
@@ -329,5 +428,5 @@ def delete_variable(request, variable_id: int):
             grouping_key=labels,
         )
 
-    v.delete()
+    var.delete()
     return "OK"

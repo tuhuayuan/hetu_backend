@@ -20,7 +20,7 @@ router = Router()
 @router.post(
     "",
     response=DepartmentOut,
-    auth=AuthBearer([("sys:dept:create", "x")]),
+    auth=AuthBearer([("sys:dept:add", "x")]),
 )
 @api_schema
 def create_dept(request, payload: DepartmentIn):
@@ -34,7 +34,7 @@ def create_dept(request, payload: DepartmentIn):
 @router.get(
     "/options",
     response=list[DepartmentOptionOut],
-    auth=AuthBearer([("sys:dept:list", "x")]),
+    auth=AuthBearer([("sys:dept:edit", "x")]),
     exclude_none=True,
 )
 @api_schema
@@ -62,7 +62,7 @@ def get_dept_option_list(request):
 @router.get(
     "",
     response=list[DepartmentListOut],
-    auth=AuthBearer([("sys:dept:list", "x")]),
+    auth=AuthBearer([("sys:dept:edit", "x")]),
 )
 @api_schema
 def get_dept_list(request, status: int = None, keywords: str = None):
@@ -100,7 +100,7 @@ def get_dept_list(request, status: int = None, keywords: str = None):
 @router.get(
     "/{dept_id}",
     response=DepartmentOut,
-    auth=AuthBearer([("sys:dept:info", "x")]),
+    auth=AuthBearer([("sys:dept:edit", "x")]),
 )
 @api_schema
 def get_dept_info(request, dept_id: int):
@@ -112,7 +112,7 @@ def get_dept_info(request, dept_id: int):
 @router.put(
     "/{dept_id}",
     response=DepartmentOut,
-    auth=AuthBearer([("sys:dept:update", "x")]),
+    auth=AuthBearer([("sys:dept:edit", "x")]),
 )
 @api_schema
 def update_dept(request, dept_id: int, payload: DepartmentUpdateIn):

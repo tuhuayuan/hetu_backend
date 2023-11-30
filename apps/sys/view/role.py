@@ -25,7 +25,7 @@ router = Router()
 @router.post(
     "",
     response=RoleOut,
-    auth=AuthBearer([("sys:role:create", "x")]),
+    auth=AuthBearer([("sys:role:add", "x")]),
 )
 @api_schema
 def create_roles(request, payload: RoleIn):
@@ -39,7 +39,7 @@ def create_roles(request, payload: RoleIn):
 @router.get(
     "",
     response=list[RoleOut],
-    auth=AuthBearer([("sys:role:list", "x")]),
+    auth=AuthBearer([("sys:role:edit", "x")]),
 )
 @api_paginate
 def get_role_info_list(request):
@@ -51,7 +51,7 @@ def get_role_info_list(request):
 @router.get(
     "/options",
     response=list[RoleOptionOut],
-    auth=AuthBearer([("sys:role:list", "x")]),
+    auth=AuthBearer([("sys:role:edit", "x")]),
 )
 @api_schema
 def get_role_option_list(request):
@@ -63,7 +63,7 @@ def get_role_option_list(request):
 @router.get(
     "/{role_id}",
     response=RoleOut,
-    auth=AuthBearer([("sys:role:info", "x")]),
+    auth=AuthBearer([("sys:role:edit", "x")]),
 )
 @api_schema
 def get_role_info(request, role_id: int):
@@ -75,7 +75,7 @@ def get_role_info(request, role_id: int):
 @router.put(
     "/{role_id}",
     response=RoleOut,
-    auth=AuthBearer([("sys:role:update", "x")]),
+    auth=AuthBearer([("sys:role:edit", "x")]),
 )
 @api_schema
 def update_role_info(request, role_id: int, payload: RoleUpdateIn):
@@ -92,7 +92,7 @@ def update_role_info(request, role_id: int, payload: RoleUpdateIn):
 @router.patch(
     "/{role_id}",
     response=RoleOut,
-    auth=AuthBearer([("sys:role:update", "x")]),
+    auth=AuthBearer([("sys:role:edit", "x")]),
 )
 @api_schema
 def update_role_status(reques, role_id: int, status: int):
@@ -107,7 +107,7 @@ def update_role_status(reques, role_id: int, status: int):
 @router.put(
     "/{role_id}/menus",
     response=list[int],
-    auth=AuthBearer([("sys:role:menu:write", "x")]),
+    auth=AuthBearer([("sys:role:edit", "x")]),
 )
 @api_schema
 def update_role_menus(request, role_id: int, payload: RoleMenuIn):
@@ -136,7 +136,7 @@ def update_role_menus(request, role_id: int, payload: RoleMenuIn):
 @router.get(
     "/{role_id}/menus",
     response=list[int],
-    auth=AuthBearer([("sys:role:menu:read", "x")]),
+    auth=AuthBearer([("sys:role:edit", "x")]),
 )
 @api_schema
 def get_role_menus(request, role_id: int):

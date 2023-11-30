@@ -4,8 +4,6 @@ from ninja import Schema
 class VariableBase(Schema):
     """变量基础结构"""
 
-    # 变量模块
-    module_id: int
     # 变量名
     name: str
     # 变量组
@@ -17,7 +15,7 @@ class VariableBase(Schema):
     # 是否本地
     local: bool = False
     # 自定义描述
-    details: str
+    details: str = ''
 
 
 class VariableOut(VariableBase):
@@ -25,6 +23,10 @@ class VariableOut(VariableBase):
 
     # 内部ID
     id: int
+    # 变量模块
+    module_id: int
+    # 站点
+    site_id: int
 
 
 class VariableGroupOut(Schema):
@@ -76,14 +78,6 @@ class ReadValueOut(Schema):
 
     # 变量ID
     id: int
-    # 模块ID
-    module_id: int
-    # 变量名
-    name: str
-    # 变量类型
-    type: str = ""
-    # 变量读写
-    rw: bool = False
     # 列表值
     values: list[Value] = []
     # 错误状态

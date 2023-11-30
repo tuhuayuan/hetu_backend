@@ -111,15 +111,21 @@ def delete_process_config(collector: Collector):
 
 
 @router.put(
-    "",
+    "/{site_id}/module/{module_id}/collector",
     response=CollectorOut,
-    auth=AuthBearer([("scada:collector:create", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:collector:create", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def create_collector(request, payload: CollectorIn):
+def create_collector(request, site_id: int, module_id: int, payload: CollectorIn):
     """创建数据采集器器"""
 
-    module = get_object_or_404(Module, id=payload.module_id)
+    module = get_object_or_404(Module, id=module_id, site_id=site_id)
+
     collector, created = Collector.objects.get_or_create(module_id=module.id)
     collector.interval = payload.interval
     collector.timeout = payload.timeout
@@ -155,7 +161,6 @@ def get_exporter_url(process_name: str) -> str:
         return advertise
 
 
-@router.get("/sd")
 def service_discover(request):
     """实现Prometheus的HTTP SD接口
     https://prometheus.io/docs/prometheus/latest/http_sd/
@@ -188,13 +193,20 @@ def service_discover(request):
 
 
 @router.get(
-    "",
+    "/{site_id}/module/{module_id}/collector",
     response=list[CollectorOut],
-    auth=AuthBearer([("scada:collector:list", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:collector:list", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
-@api_paginate
-def get_collector_list(request):
-    collectors = Collector.objects.all()
+@api_schema
+def get_collector_list(request, site_id: int, module_id: int):
+    """获取列表"""
+
+    collectors = Collector.objects.filter(module_id=module_id, module__site_id=site_id)
     outlist: list[CollectorOut] = []
 
     for c in collectors:
@@ -219,17 +231,30 @@ def get_collector_list(request):
 
 
 @router.patch(
-    "/{collector_id}",
+    "/{site_id}/module/{module_id}/collector/{collector_id}",
     response=CollectorOut,
-    auth=AuthBearer([("scada:collector:change_status", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:collector:update", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def change_collector_status(request, collector_id: int, payload: CollectorStatusIn):
+def change_collector_status(
+    request,
+    site_id: int,
+    module_id: int,
+    collector_id: int,
+    payload: CollectorStatusIn,
+):
     """修改收集器运行状态"""
 
-    collector = get_object_or_404(Collector, id=collector_id)
+    collector = get_object_or_404(
+        Collector, id=collector_id, module_id=module_id, module__site_id=site_id
+    )
     process_name = get_proccess_name(collector)
-    
+
     info = rpc.supervisor.getProcessInfo(process_name)
     running = info["statename"] == "RUNNING"
     collector_url = ""
@@ -270,15 +295,27 @@ def change_collector_status(request, collector_id: int, payload: CollectorStatus
 
 
 @router.delete(
-    "/{collector_id}",
+    "/{site_id}/module/{module_id}/collector/{collector_id}",
     response=str,
-    auth=AuthBearer([("scada:collector:delete", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:collector:delete", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def delete_collector(request, collector_id: int):
+def delete_collector(
+    request,
+    site_id: int,
+    module_id: int,
+    collector_id: int,
+):
     """删除接口"""
 
-    collector = get_object_or_404(Collector, id=collector_id)
+    collector = get_object_or_404(
+        Collector, id=collector_id, module_id=module_id, module__site_id=site_id
+    )
     collector.delete()
 
     try:
