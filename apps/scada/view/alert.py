@@ -14,7 +14,7 @@ from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
-from apps.scada.models import Notify, Rule
+from apps.scada.models import Notify, Rule, Variable
 from apps.scada.schema.alert import RuleOut, RuleIn, NotifyOut
 from apps.sys.utils import AuthBearer
 from utils.schema.base import api_schema
@@ -37,7 +37,6 @@ def build_expr(r: Rule) -> str:
         "hight_limit": "{metric_selector} > {threshold}",
         "low_limit": "{metric_selector} < {threshold}",
         "binary_state": "{metric_selector} == {state}",
-        # "no_change": "changes({metric_selector}[{duration}]) == 0",
     }
 
     if r.alert_type in alert_exprs:
@@ -95,18 +94,22 @@ def get_config_file(rule: Rule) -> str:
 
 
 @router.put(
-    "/rule",
+    "/{site_id}/alert/rule",
     response=RuleOut,
     exclude_unset=True,
-    auth=AuthBearer([("scada:alert:set", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:alert:add", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def set_rule(request, payload: RuleIn):
+def set_rule(request, site_id: int, payload: RuleIn):
     """设置变量告警规则"""
 
-    r, created = Rule.objects.get_or_create(
-        variable_id=payload.variable_id, name=payload.name
-    )
+    var = get_object_or_404(Variable, id=payload.variable_id, module__site_id=site_id)
+    r, created = Rule.objects.get_or_create(variable_id=var.id, name=payload.name)
     r.description = payload.description
     r.alert_type = payload.alert_type
     r.alert_level = payload.alert_level.value
@@ -163,32 +166,42 @@ def set_rule(request, payload: RuleIn):
 
 
 @router.get(
-    "/rule",
+    "/{site_id}/alert/rule",
     response=list[RuleOut],
     exclude_unset=True,
-    auth=AuthBearer([("scada:alert:list", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:alert:edit", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_paginate
-def get_rule_list(request, module_number: str, variable_name: str = None):
+def get_rule_list(request, site_id: int, rule_name: str = None):
     """获取配置的告警列表"""
-    rules = Rule.objects.filter(variable__module__module_number=module_number)
 
-    if variable_name:
-        rules = rules.fileter(name__icontains=variable_name)
+    rules = Rule.objects.filter(variable__module__site_id=site_id)
+    if rule_name:
+        rules = rules.filter(name__icontains=rule_name)
 
     return rules
 
 
 @router.delete(
-    "/rule/{rule_id}",
+    "/{site_id}/alert/rule/{rule_id}",
     response=str,
-    auth=AuthBearer([("scada:alert:delete", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:alert:delete", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def delete_rule(request, rule_id: int):
+def delete_rule(request, site_id: int, rule_id: int):
     """删除接口"""
 
-    rule = get_object_or_404(Rule, id=rule_id)
+    rule = get_object_or_404(Rule, id=rule_id, variable__module__site_id=site_id)
     file_path = get_config_file(rule)
     with open(file_path, "r+") as file:
         try:
@@ -221,8 +234,6 @@ def delete_rule(request, rule_id: int):
     return "Ok"
 
 
-@router.post("/notify", response=str)
-@api_schema
 def create_notify(request: HttpRequest):
     """接收alertmanger的webhook通知调用, 并转换成系统的通知信息
     调用的JSON格式参考
@@ -300,29 +311,42 @@ def create_notify(request: HttpRequest):
 
 
 @router.get(
-    "/notify",
+    "/{site_id}/alert/notify",
     response=list[NotifyOut],
-    auth=AuthBearer([("scada:alert:notify:list", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:alert:edit", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_paginate
-def get_notifies(request, external_id: str):
+def get_notifies(request, site_id: int, external_id: str):
     """列出模块通知"""
 
-    notifies = Notify.objects.filter(external_id=external_id)
+    site_filter = str(site_id) + "::"
+    notifies = Notify.objects.filter(
+        title__startswith=site_filter, external_id=external_id
+    )
 
     return notifies.order_by(("-notified_at")).all()
 
 
 @router.get(
-    "/notify/activated",
+    "/{site_id}/alert/notify/activated",
     response=list[NotifyOut],
-    auth=AuthBearer([("scada:alert:notify:list", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:alert:edit", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_schema
 def get_activated_notifies(request, site_id: int):
     """获取站点里面所有激活状态的预警"""
-    site_filter = str(site_id) + "::"
 
+    site_filter = str(site_id) + "::"
     notifies = Notify.objects.filter(title__startswith=site_filter)
     latest_record_ids = (
         notifies.filter(
@@ -339,17 +363,19 @@ def get_activated_notifies(request, site_id: int):
 
 
 @router.get(
-    "/notify/total",
+    "/{site_id}/alert/notify/total",
     response=int,
-    auth=AuthBearer([("scada:alert:notify:list", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:alert:edit", "x"),
+        ]
+    ),
 )
 @api_schema
-def get_notify_total(request, site_id: int, module_id: int = None, ack: bool = None):
+def get_notify_total(request, site_id: int, ack: bool = None):
     """获取总数"""
-    filter_title = str(site_id) + "::"
-    if module_id:
-        filter_title += str(module_id) + "::"
 
+    filter_title = str(site_id) + "::"
     notifies = Notify.objects.filter(title__startswith=filter_title)
 
     if ack != None:
@@ -359,15 +385,21 @@ def get_notify_total(request, site_id: int, module_id: int = None, ack: bool = N
 
 
 @router.patch(
-    "/notify/{notify_id}",
+    "/{site_id}/alert/notify/{notify_id}",
     response=str,
-    auth=AuthBearer([("scada:alert:notify:ack", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:alert:edit", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_schema
-def ack_notify(request, notify_id: int):
+def ack_notify(request, site_id: int, notify_id: int):
     """标记已读"""
 
-    nofity = get_object_or_404(Notify, id=notify_id)
+    filter_title = str(site_id) + "::"
+    nofity = get_object_or_404(Notify, id=notify_id, title__startswith=filter_title)
 
     if not nofity.ack:
         nofity.ack = True

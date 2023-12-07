@@ -20,8 +20,6 @@ class CollectorOut(Schema):
 class CollectorIn(Schema):
     """创建请求结构"""
 
-    # 模块ID
-    module_id: int
     # 数据读取间隔（秒）
     interval: int = 5
     # 超时（秒）

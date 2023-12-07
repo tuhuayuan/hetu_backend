@@ -22,44 +22,60 @@ router = Router()
 
 
 @router.post(
-    "",
+    "/{site_id}/module",
     response=ModuleOut,
-    auth=AuthBearer([("scada:module:create", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:module:add", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def create_module(request, payload: ModuleIn):
+def create_module(request, site_id: int, payload: ModuleIn):
     """创建GRM模块接口"""
 
     module = Module(updated_at=datetime.now(), **payload.dict())
+    # 强制site_id
+    module.site_id = site_id
     module.save()
     return module
 
 
 @router.get(
-    "/options",
+    "/{site_id}/module/options",
     response=list[ModuleOptionOut],
-    auth=AuthBearer([("scada:module:list", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:module:edit", "x"),
+            ("scada:module:info", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_schema
-def get_module_option_list(request, site_id: int = None):
+def get_module_option_list(request, site_id: int):
     """获取选项列表"""
-    modules = Module.objects.all()
-    if site_id:
-        modules = modules.filter(site_id=site_id)
 
-    return modules.all()
+    return Module.objects.filter(site_id=site_id)
 
 
 @router.get(
-    "/{module_id}",
+    "/{site_id}/module/{module_id}",
     response=ModuleInfoOut,
-    auth=AuthBearer([("scada:module:info", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:module:edit", "x"),
+            ("scada:module:info", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_schema
-def get_module_info(request, module_id: int):
+def get_module_info(request, site_id: int, module_id: int):
     """获取模块信息"""
 
-    module = get_object_or_404(Module, id=module_id)
+    module = get_object_or_404(Module, id=module_id, site_id=site_id)
 
     # 获取巨控信息
     out = ModuleInfoOut.from_orm(module)
@@ -73,36 +89,44 @@ def get_module_info(request, module_id: int):
 
 
 @router.get(
-    "",
+    "/{site_id}/module",
     response=list[ModuleOut],
-    auth=AuthBearer([("scada:module:list", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:module:edit", "x"),
+            ("scada:site:permit:{site_id}", "r"),
+        ]
+    ),
 )
 @api_paginate
-def get_module_list(request, keywords: str = None, site_id: int = None):
+def get_module_list(request, site_id: int, keywords: str = None):
     """获取模块列表"""
 
-    modules = Module.objects.all()
+    modules = Module.objects.filter(site_id=site_id)
 
     if keywords:
         modules = modules.filter(
             Q(name__icontains=keywords) | Q(module_number__icontains=keywords)
         )
-    if site_id:
-        modules = modules.filter(site_id=site_id)
 
     return modules.all()
 
 
 @router.put(
-    "/{module_id}",
+    "/{site_id}/module/{module_id}",
     response=ModuleOut,
-    auth=AuthBearer([("scada:module:update", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:module:edit", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def update_grm(request, module_id: int, payload: ModuleUpdateIn):
+def update_grm(request, site_id: int, module_id: int, payload: ModuleUpdateIn):
     """更新模块信息"""
 
-    module = get_object_or_404(Module, id=module_id)
+    module = get_object_or_404(Module, id=module_id, site_id=site_id)
     module.name = payload.name
     module.module_secret = payload.module_secret
     module.module_url = payload.module_url
@@ -111,14 +135,19 @@ def update_grm(request, module_id: int, payload: ModuleUpdateIn):
 
 
 @router.delete(
-    "/{module_id}",
+    "/{site_id}/module/{module_id}",
     response=str,
-    auth=AuthBearer([("scada:module:delete", "x")]),
+    auth=AuthBearer(
+        [
+            ("scada:module:delete", "x"),
+            ("scada:site:permit:{site_id}", "w"),
+        ]
+    ),
 )
 @api_schema
-def delete_grm(request, module_id: int):
+def delete_grm(request, site_id: int, module_id: int):
     """删除模块"""
 
-    module = get_object_or_404(Module, id=module_id)
+    module = get_object_or_404(Module, id=module_id, site_id=site_id)
     module.delete()
     return "Ok"

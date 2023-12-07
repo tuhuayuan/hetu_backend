@@ -21,6 +21,7 @@ casbin = "^1.31.2"
 casbin-django-orm-adapter = "^1.1.2"
 pyyaml = "^6.0.1"
 pandas = "^2.1.1"
+oss2 = "^2.18.3"
 
 
 [build-system]

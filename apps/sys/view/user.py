@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from casbin_adapter.enforcer import enforcer
 
-from apps.sys.models import User
+from apps.sys.models import Department, User
 from apps.sys.schemas import (
     UserBase,
     UserCreateIn,
@@ -25,7 +25,7 @@ router = Router()
 @router.post(
     "",
     response=UserCreateOut,
-    auth=AuthBearer([("sys:user:create", "x")]),
+    auth=AuthBearer([("sys:user:add", "x")]),
 )
 @api_schema
 def create_user(request, payload: UserCreateIn):
@@ -57,10 +57,22 @@ def create_user(request, payload: UserCreateIn):
     return out
 
 
+def get_all_subdepartments(dept_id):
+    """递归获取部门及其所有子部门的ID"""
+
+    department_ids = [dept_id]
+    subdepartments = Department.objects.filter(parent_id=dept_id)
+
+    for subdept in subdepartments:
+        department_ids.extend(get_all_subdepartments(subdept.id))
+
+    return department_ids
+
+
 @router.get(
     "",
     response=list[UserListOut],
-    auth=AuthBearer([("sys:user:list", "x")]),
+    auth=AuthBearer([("sys:user:edit", "x")]),
 )
 @api_paginate
 def get_user_list(
@@ -81,6 +93,11 @@ def get_user_list(
 
     if status:
         users = users.filter(status=status)
+
+    if dept_id:
+        # 获取当前部门及其所有子部门的ID
+        department_ids = get_all_subdepartments(dept_id)
+        users = users.filter(dept_id__in=department_ids)
 
     users = users.all()
 
@@ -103,7 +120,12 @@ def get_user_list(
 @router.get(
     "/me",
     response=UserLoginInfoOut,
-    auth=AuthBearer([("sys:user:me", "x"), ("user:{username}:me", "x")]),
+    auth=AuthBearer(
+        [
+            ("sys:user:edit", "x"),
+            ("user:{username}:me", "x"),
+        ]
+    ),
 )
 @api_schema
 def get_user_login_info(request):
@@ -131,7 +153,12 @@ def get_user_login_info(request):
 @router.get(
     "/{user_id}",
     response=UserCreateOut,
-    auth=AuthBearer([("sys:user:info", "x")]),
+    auth=AuthBearer(
+        [
+            ("sys:user:edit", "x"),
+            ("sys:user:info", "x"),
+        ]
+    ),
 )
 @api_schema
 def get_user_info(request, user_id: int):
@@ -153,7 +180,7 @@ def get_user_info(request, user_id: int):
 @router.put(
     "/{user_id}",
     response=UserCreateOut,
-    auth=AuthBearer([("sys:user:update", "x")]),
+    auth=AuthBearer([("sys:user:edit", "x")]),
 )
 @api_schema
 def update_user_info(request, user_id: int, payload: UserUpdateIn):
@@ -179,7 +206,7 @@ def update_user_info(request, user_id: int, payload: UserUpdateIn):
 @router.patch(
     "/{user_id}/password",
     response=str,
-    auth=AuthBearer([("sys:user:password", "x"), ("user:{username}:password", "x")]),
+    auth=AuthBearer([("sys:user:edit", "x"), ("user:{username}:password", "x")]),
 )
 @api_schema
 def change_password(request, user_id: int, payload: UserPasswordIn):

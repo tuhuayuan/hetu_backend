@@ -1,13 +1,18 @@
 import hashlib
 from datetime import datetime
+from django.http import HttpRequest
 
 import jwt
 from casbin_adapter.enforcer import enforcer
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from ninja.security import HttpBearer
-
+from casbin import Enforcer
 from apps.sys.models import User
+
+
+def get_enforcer() -> Enforcer:
+    return enforcer
 
 
 def get_password(password: str) -> str:
@@ -38,8 +43,7 @@ class AuthBearer(HttpBearer):
         self._perms = perms
         super().__init__()
 
-    def authenticate(self, request, token):
-
+    def authenticate(self, request: HttpRequest, token):
         try:
             login_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
 
@@ -51,8 +55,10 @@ class AuthBearer(HttpBearer):
 
             # 只需要满足任意一项配置的权限
             for p in self._perms:
-                obj = p[0].format(username=login_token["username"])
-                act = p[1].format(methoed=request.method)
+                obj = p[0].format(
+                    username=login_token["username"], **request.resolver_match.kwargs
+                )
+                act = p[1]
 
                 # 验证调用权限
                 if enforcer.enforce(login_token["username"], obj, act):

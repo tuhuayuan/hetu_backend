@@ -20,7 +20,7 @@ router = Router()
 @router.post(
     "",
     response=MenuInfoOut,
-    auth=AuthBearer([("sys:menu:create", "x")]),
+    auth=AuthBearer([("sys:menu:add", "x")]),
 )
 @api_schema
 def create_menu(request, payload: MenuIn):
@@ -35,7 +35,7 @@ def create_menu(request, payload: MenuIn):
     "/options",
     response=list[MenuTreeOptionOut],
     exclude_none=True,
-    auth=AuthBearer([("sys:menu:options", "x")]),
+    auth=AuthBearer([("sys:menu:edit", "x")]),
 )
 @api_schema
 def get_menu_option_tree(request):
@@ -55,7 +55,7 @@ def get_menu_option_tree(request):
                 current_data.children.append(child_data)
         return current_data
 
-    root_menus = Menu.objects.filter(parent_id=None).all()
+    root_menus = Menu.objects.filter(parent_id=0).all()
     root_menus_data: MenuTreeOptionOut = []
     for m in root_menus:
         menu_data = _get_menu_and_child(m)
@@ -64,21 +64,16 @@ def get_menu_option_tree(request):
     return root_menus_data
 
 
-@router.get(
-    "/routers",
-    response=list[MenuTreeRouterOut],
-    exclude_none=True,
-    auth=AuthBearer([("sys:menu:routers", "x")]),
-)
+@router.get("/routers", response=list[MenuTreeRouterOut], exclude_none=True)
 @api_schema
 def get_menu_router_tree(request):
     """获取路由树"""
 
-    def _to_camel_case(s):
+    def _to_camel_case(s: str):
         parts = s.split("-")
-        return "".join(x.title() for x in parts)
+        return "".join(part.title() for part in parts)
 
-    def _get_menu_and_child(menu: Menu):
+    def _get_menu_and_child(menu: Menu, parent_name=""):
         roles = [r.code for r in menu.roles.all()]
 
         meta = MenuTreeRouterOut.RouterMeta(
@@ -93,9 +88,12 @@ def get_menu_router_tree(request):
             path=menu.path, component=menu.component, meta=meta
         )
 
-        # 路由 name 需要驼峰，首字母大写
+        # 构建 name，如果有父级名称则结合父级名称和当前 path 的驼峰形式来确保唯一性
         if menu.menu_type == MenuType.MENU:
-            current_router.name = _to_camel_case(menu.path)
+            combined_name = (parent_name + '-' + menu.path).replace("/", "-")
+            current_router.name = _to_camel_case(combined_name)
+        else:
+            current_router.name = menu.path
 
         children = (
             Menu.objects.filter(parent_id=menu.id).exclude(menu_type="BUTTON").all()
@@ -105,12 +103,12 @@ def get_menu_router_tree(request):
 
         # 递归
         for child in children:
-            child_router = _get_menu_and_child(child)
+            child_router = _get_menu_and_child(child, current_router.name)
             if child_router:
                 current_router.children.append(child_router)
         return current_router
 
-    root_menus = Menu.objects.filter(parent_id=None).exclude(menu_type="BUTTON").all()
+    root_menus = Menu.objects.filter(parent_id=0).exclude(menu_type="BUTTON").all()
     root_menus_router: MenuTreeRouterOut = []
     for m in root_menus:
         menu_router = _get_menu_and_child(m)
@@ -121,7 +119,7 @@ def get_menu_router_tree(request):
 @router.get(
     "/{menu_id}",
     response=MenuInfoOut,
-    auth=AuthBearer([("sys:menu:info", "x")]),
+    auth=AuthBearer([("sys:menu:edit", "x")]),
 )
 @api_schema
 def get_menu_info(request, menu_id: int):
@@ -133,7 +131,7 @@ def get_menu_info(request, menu_id: int):
 @router.put(
     "/{menu_id}",
     response=MenuInfoOut,
-    auth=AuthBearer([("sys:menu:update", "x")]),
+    auth=AuthBearer([("sys:menu:edit", "x")]),
 )
 @api_schema
 def update_menu_info(request, menu_id: int, payload: MenuIn):
@@ -166,7 +164,7 @@ def update_menu_info(request, menu_id: int, payload: MenuIn):
 @router.patch(
     "/{menu_id}",
     response=MenuInfoOut,
-    auth=AuthBearer([("sys:menu:visible", "x")]),
+    auth=AuthBearer([("sys:menu:edit", "x")]),
 )
 @api_schema
 def change_meun_visible(request, menu_id: int, visible: bool):
@@ -181,7 +179,7 @@ def change_meun_visible(request, menu_id: int, visible: bool):
 @router.get(
     "",
     response=list[MenuTreeOut],
-    auth=AuthBearer([("sys:menu:tree", "x")]),
+    auth=AuthBearer([("sys:menu:edit", "x")]),
 )
 @api_schema
 def get_menu_tree(request, visible: int = None, keyword: str = None):

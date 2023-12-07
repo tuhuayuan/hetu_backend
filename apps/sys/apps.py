@@ -8,5 +8,5 @@ class AuthConfig(AppConfig):
 
     def ready(self) -> None:
         from apps.sys.rolemanager import RoleManager
-        setattr(settings, 'CASBIN_ROLE_MANAGER', RoleManager())
-        
+
+        setattr(settings, "CASBIN_ROLE_MANAGER", RoleManager())

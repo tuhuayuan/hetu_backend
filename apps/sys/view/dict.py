@@ -21,7 +21,7 @@ router = Router()
 @router.post(
     "/type",
     response=DictTypeOut,
-    auth=AuthBearer([("sys:dict:type:create", "x")]),
+    auth=AuthBearer([("sys:dict_type:add", "x")]),
 )
 @api_schema
 def create_dicttype(request, payload: DictTypeIn):
@@ -35,7 +35,7 @@ def create_dicttype(request, payload: DictTypeIn):
 @router.get(
     "/type",
     response=list[DictTypeOut],
-    auth=AuthBearer([("sys:dict:type:list", "x")]),
+    auth=AuthBearer([("sys:dict_type:edit", "x")]),
 )
 @api_paginate
 def list_dicttype(request, keywords: str = None):
@@ -52,7 +52,7 @@ def list_dicttype(request, keywords: str = None):
 @router.get(
     "/type/{type_id}",
     response=DictTypeOut,
-    auth=AuthBearer([("sys:dict:type:info", "x")]),
+    auth=AuthBearer([("sys:dict_type:edit", "x")]),
 )
 @api_schema
 def get_dicttype(request, type_id: int):
@@ -64,7 +64,7 @@ def get_dicttype(request, type_id: int):
 @router.put(
     "/type/{type_id}",
     response=DictTypeOut,
-    auth=AuthBearer([("sys:dict:type:update", "x")]),
+    auth=AuthBearer([("sys:dict_type:edit", "x")]),
 )
 @api_schema
 def update_dicttype(request, type_id: int, payload: DictTypeIn):
@@ -82,7 +82,7 @@ def update_dicttype(request, type_id: int, payload: DictTypeIn):
 @router.delete(
     "/type/{type_id}",
     response=str,
-    auth=AuthBearer([("sys:dict:type:delete", "x")]),
+    auth=AuthBearer([("sys:dict_type:delete", "x")]),
 )
 @api_schema
 def delete_dicttype(request, type_id: int):
@@ -96,7 +96,7 @@ def delete_dicttype(request, type_id: int):
 @router.post(
     "/data",
     response=DictDataOut,
-    auth=AuthBearer([("sys:dict:data:create", "x")]),
+    auth=AuthBearer([("sys:dict:add", "x")]),
 )
 @api_schema
 def create_dictdata(request, payload: DictDataIn):
@@ -110,7 +110,7 @@ def create_dictdata(request, payload: DictDataIn):
 @router.get(
     "/data",
     response=list[DictDataOut],
-    auth=AuthBearer([("sys:dict:data:list", "x")]),
+    auth=AuthBearer([("sys:dict:edit", "x")]),
 )
 @api_paginate
 def get_dictdata_list(request, type_code: str = None, keywords: str = None):
@@ -130,7 +130,7 @@ def get_dictdata_list(request, type_code: str = None, keywords: str = None):
 @router.get(
     "/data/options",
     response=list[DictDataOptionOut],
-    auth=AuthBearer([("sys:dict:data:options", "x")]),
+    auth=AuthBearer([("sys:dict:edit", "x")]),
 )
 @api_schema
 def get_dictdata_option_list(request, type_code: str):
@@ -142,7 +142,7 @@ def get_dictdata_option_list(request, type_code: str):
 @router.get(
     "/data/{data_id}",
     response=DictDataOut,
-    auth=AuthBearer([("sys:dict:data:info", "x")]),
+    auth=AuthBearer([("sys:dict:edit", "x")]),
 )
 @api_schema
 def get_dictdata(request, data_id: int):
@@ -154,7 +154,7 @@ def get_dictdata(request, data_id: int):
 @router.put(
     "/data/{data_id}",
     response=DictDataOut,
-    auth=AuthBearer([("sys:dict:data:update", "x")]),
+    auth=AuthBearer([("sys:dict:edit", "x")]),
 )
 @api_schema
 def update_dictdata(request, data_id: int, payload: DictDataIn):
@@ -174,7 +174,7 @@ def update_dictdata(request, data_id: int, payload: DictDataIn):
 @router.delete(
     "/data/{data_id}",
     response=str,
-    auth=AuthBearer([("sys:dict:data:delete", "x")]),
+    auth=AuthBearer([("sys:dict:delete", "x")]),
 )
 @api_schema
 def delete_dictdata(request, data_id: int):

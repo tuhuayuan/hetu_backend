@@ -415,3 +415,9 @@ class MenuTreeRouterOut(Schema):
     # 子路由列表
     children: list["MenuTreeRouterOut"] = None
 
+
+class ResourceOut(Schema):
+    """资源列表"""
+
+    resource_key: str
+    resource_url: str
