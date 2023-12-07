@@ -276,5 +276,6 @@ deploy/supervisor/include
 deploy/prometheus/prometheus.yml
 deploy/alertmanager/alertmanager.yml
 deploy/supervisor/supervisord.conf
+deploy/uploads
 .pytest_cache/
 resource/

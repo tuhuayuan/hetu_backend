@@ -1,4 +1,8 @@
 import imghdr
+import mimetypes
+import os
+from django.conf import settings
+from django.http import HttpResponse
 
 from ninja import File, Router
 from ninja.errors import HttpError
@@ -25,6 +29,27 @@ bucket = Bucket(auth, oss_endpoint, oss_bucket_name)
 
 # 路由器
 router = Router()
+
+
+@router.get("/{resource}/{file_name}")
+def get_static_resource(request, resource: str, file_name: str):
+    """获取资源文件"""
+
+    # 将资源路径和文件名拼接为绝对路径
+    file_path = os.path.join(settings.UPLOAD_ROOT, resource, file_name)
+
+    # 检查文件是否存在
+    if not os.path.exists(file_path):
+        raise HttpError(404, "File not found: " + file_path)
+
+    # 获取文件的 MIME 类型
+    mime_type, _ = mimetypes.guess_type(file_path)
+
+    # 返回文件响应
+    with open(file_path, "rb") as file:
+        response = HttpResponse(file, content_type=mime_type)
+        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
+        return response
 
 
 @router.post("", response=str)
