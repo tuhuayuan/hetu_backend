@@ -34,7 +34,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 
 # 允许本地和Docker环境
-ALLOWED_HOSTS = ["host.docker.internal", "localhost", "127.0.0.1", "hetu-api"]
+ALLOWED_HOSTS = ["172.19.225.14", "host.docker.internal", "localhost", "127.0.0.1", "hetu-api"]
 
 # 安装的应用列表
 INSTALLED_APPS = [
