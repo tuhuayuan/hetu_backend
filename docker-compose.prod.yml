@@ -155,6 +155,17 @@ services:
     volumes:
       - ./deploy/supervisor/include:/etc/supervisor/include
       - ./deploy/prometheus/include:/etc/prometheus/include
+      - ./deploy/uploads:/etc/api/uploads
+    networks:
+      - my_network
+
+  pgadmin:
+    image: dpage/pgadmin4:5
+    ports:
+      - 5050:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: tuhuayuan@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: hetu
     networks:
       - my_network
 
