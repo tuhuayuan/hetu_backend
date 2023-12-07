@@ -39,7 +39,7 @@ router = Router()
     response=ReadValueOut,
     auth=AuthBearer(
         [
-            ("scada:variable:values:read", "x"),
+            ("scada:variable:read", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -86,7 +86,7 @@ def read_range(
     response=list[ReadValueOut],
     auth=AuthBearer(
         [
-            ("scada:variable:values:read", "x"),
+            ("scada:variable:read", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -146,7 +146,7 @@ def read_values(
     response=VariableOut,
     auth=AuthBearer(
         [
-            ("scada:variable:create", "x"),
+            ("scada:variable:add", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),
@@ -172,7 +172,7 @@ def create_variable(
     response=list[VariableOptionOut],
     auth=AuthBearer(
         [
-            ("scada:variable:list", "x"),
+            ("scada:variable:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -199,7 +199,7 @@ def get_variable_option_list(
     response=list[str],
     auth=AuthBearer(
         [
-            ("scada:variable:list", "x"),
+            ("scada:variable:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -226,7 +226,7 @@ def get_variable_group_list(
     response=VariableOut,
     auth=AuthBearer(
         [
-            ("scada:variable:update", "x"),
+            ("scada:variable:edit", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),
@@ -285,7 +285,7 @@ def write_local_var(variable: Variable, payload: WriteValueIn):
     response=list[WriteValueOut],
     auth=AuthBearer(
         [
-            ("scada:variable:values:write", "x"),
+            ("scada:variable:write", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),
@@ -348,7 +348,7 @@ def update_variable_values(
     response=VariableOut,
     auth=AuthBearer(
         [
-            ("scada:variable:info", "x"),
+            ("scada:variable:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -374,7 +374,7 @@ def get_variable_info(
     response=list[VariableOut],
     auth=AuthBearer(
         [
-            ("scada:variable:list", "x"),
+            ("scada:variable:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),

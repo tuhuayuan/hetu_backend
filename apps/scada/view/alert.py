@@ -99,7 +99,7 @@ def get_config_file(rule: Rule) -> str:
     exclude_unset=True,
     auth=AuthBearer(
         [
-            ("scada:alert:create", "x"),
+            ("scada:alert:add", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),
@@ -171,7 +171,7 @@ def set_rule(request, site_id: int, payload: RuleIn):
     exclude_unset=True,
     auth=AuthBearer(
         [
-            ("scada:alert:list", "x"),
+            ("scada:alert:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -315,7 +315,7 @@ def create_notify(request: HttpRequest):
     response=list[NotifyOut],
     auth=AuthBearer(
         [
-            ("scada:alert:notify:list", "x"),
+            ("scada:alert:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -337,7 +337,7 @@ def get_notifies(request, site_id: int, external_id: str):
     response=list[NotifyOut],
     auth=AuthBearer(
         [
-            ("scada:alert:notify:list", "x"),
+            ("scada:alert:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -367,8 +367,7 @@ def get_activated_notifies(request, site_id: int):
     response=int,
     auth=AuthBearer(
         [
-            ("scada:alert:notify:list", "x"),
-            ("scada:site:permit:{site_id}", "r"),
+            ("scada:alert:edit", "x"),
         ]
     ),
 )
@@ -390,7 +389,7 @@ def get_notify_total(request, site_id: int, ack: bool = None):
     response=str,
     auth=AuthBearer(
         [
-            ("scada:alert:notify:ack", "x"),
+            ("scada:alert:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),

@@ -16,7 +16,7 @@ router = Router()
     response=GraphOut,
     auth=AuthBearer(
         [
-            ("scada:graph:create", "x"),
+            ("scada:graph:add", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),
@@ -36,7 +36,7 @@ def create_graph(request, site_id: int, payload: GraphIn):
     response=list[GraphOptionOut],
     auth=AuthBearer(
         [
-            ("scada:graph:options", "x"),
+            ("scada:graph:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -53,7 +53,7 @@ def get_graph_option_list(request, site_id: int):
     response=list[GraphOut],
     auth=AuthBearer(
         [
-            ("scada:graph:list", "x"),
+            ("scada:graph:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -75,7 +75,7 @@ def get_graph_list(request, site_id: int, keywords: str = None):
     response=GraphOut,
     auth=AuthBearer(
         [
-            ("scada:graph:get", "x"),
+            ("scada:graph:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -92,7 +92,7 @@ def get_graph_info(request, site_id: int, graph_id: int):
     response=GraphOut,
     auth=AuthBearer(
         [
-            ("scada:graph:update", "x"),
+            ("scada:graph:edit", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),

@@ -26,7 +26,7 @@ router = Router()
     response=ModuleOut,
     auth=AuthBearer(
         [
-            ("scada:module:create", "x"),
+            ("scada:module:add", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),
@@ -47,7 +47,8 @@ def create_module(request, site_id: int, payload: ModuleIn):
     response=list[ModuleOptionOut],
     auth=AuthBearer(
         [
-            ("scada:module:list", "x"),
+            ("scada:module:edit", "x"),
+            ("scada:module:info", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -64,6 +65,7 @@ def get_module_option_list(request, site_id: int):
     response=ModuleInfoOut,
     auth=AuthBearer(
         [
+            ("scada:module:edit", "x"),
             ("scada:module:info", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
@@ -91,7 +93,7 @@ def get_module_info(request, site_id: int, module_id: int):
     response=list[ModuleOut],
     auth=AuthBearer(
         [
-            ("scada:module:list", "x"),
+            ("scada:module:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -115,7 +117,7 @@ def get_module_list(request, site_id: int, keywords: str = None):
     response=ModuleOut,
     auth=AuthBearer(
         [
-            ("scada:module:update", "x"),
+            ("scada:module:edit", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),

@@ -29,6 +29,7 @@ router = Router()
     auth=AuthBearer(
         [
             ("scada:site:edit", "x"),
+            ("scada:site:info", "x"),
         ]
     ),
 )
@@ -42,15 +43,53 @@ def get_permit_list(request, site_id: int):
         user = User.objects.filter(username=username).values("id").first()
         if not user:
             continue
-        user_id = user['id']
+        user_id = user["id"]
         if permission == "w":
             permit[user_id] = permission
         elif permission == "r" and user_id not in permit:
             permit[user_id] = permission
 
     output = [
-        SitePermit(user_id=user_id, permit=SITE_PERMIT(permission))
+        SitePermit(user_id=user_id, permit=SITE_PERMIT(permission), site_id=site_id)
         for user_id, permission in permit.items()
+    ]
+
+    return output
+
+
+@router.get(
+    "/permit/{user_id}",
+    response=list[SitePermit],
+    auth=AuthBearer(
+        [
+            ("scada:site:edit", "x"),
+            ("scada:site:info", "x"),
+        ]
+    ),
+)
+@api_schema
+def get_permit_by_user(request, user_id: int):
+    """获取用户授权的列表"""
+
+    user = get_object_or_404(User, id=user_id)
+    enforcer = get_enforcer()
+    policies = [
+        policy
+        for policy in enforcer.get_filtered_policy(0, user.username)
+        if policy[1].startswith("scada:site:permit:")
+    ]
+    permit: dict[int, str] = {}
+
+    for _, target, permission in policies:
+        site_id = target.split(":")[-1]
+        if permission == "w":
+            permit[site_id] = permission
+        elif permission == "r" and site_id not in permit:
+            permit[site_id] = permission
+
+    output = [
+        SitePermit(user_id=user_id, permit=SITE_PERMIT(permission), site_id=site_id)
+        for site_id, permission in permit.items()
     ]
 
     return output
@@ -111,6 +150,7 @@ def create_site(request, payload: SiteIn):
     auth=AuthBearer(
         [
             ("scada:site:edit", "x"),
+            ("scada:site:info", "x"),
         ],
     ),
 )
@@ -159,6 +199,7 @@ def get_site_list(request, keywords: str = None):
     auth=AuthBearer(
         [
             ("scada:site:edit", "x"),
+            ("scada:site:info", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -249,7 +290,7 @@ def create_statistic(request, site_id: int, payload: SiteStatisticIn):
     auth=AuthBearer(
         [
             ("scada:site:edit", "x"),
-            ("scada:site:permit:{site_id}", "r"),
+            ("scada:site:info", "x"),
         ]
     ),
 )
@@ -304,6 +345,7 @@ def get_statistic_value(
     auth=AuthBearer(
         [
             ("scada:site:edit", "x"),
+            ("scada:site:info", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),

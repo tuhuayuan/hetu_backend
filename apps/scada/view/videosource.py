@@ -16,7 +16,7 @@ router = Router()
     response=SiteVideoSourceOptionOut,
     auth=AuthBearer(
         [
-            ("scada:site:create", "x"),
+            ("scada:site:add", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),
@@ -35,7 +35,7 @@ def create_videosource(request, site_id: int, payload: SiteVideoSourceIn):
     response=list[SiteVideoSourceOptionOut],
     auth=AuthBearer(
         [
-            ("scada:site:get", "x"),
+            ("scada:site:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -52,7 +52,7 @@ def list_videosource(request, site_id: int):
     response=SiteVideoSourceOut,
     auth=AuthBearer(
         [
-            ("scada:site:get", "x"),
+            ("scada:site:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -84,7 +84,7 @@ def get_videosource(request, videosource_id: int, site_id: int):
     response=str,
     auth=AuthBearer(
         [
-            ("scada:site:create", "x"),
+            ("scada:site:delete", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),

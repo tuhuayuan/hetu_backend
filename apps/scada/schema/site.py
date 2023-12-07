@@ -103,5 +103,6 @@ class SITE_PERMIT(str, Enum):
 class SitePermit(Schema):
     """站点授权请求结构"""
 
+    site_id: int
     user_id: int
     permit: SITE_PERMIT

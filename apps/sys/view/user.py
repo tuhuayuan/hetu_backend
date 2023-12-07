@@ -153,7 +153,12 @@ def get_user_login_info(request):
 @router.get(
     "/{user_id}",
     response=UserCreateOut,
-    auth=AuthBearer([("sys:user:edit", "x")]),
+    auth=AuthBearer(
+        [
+            ("sys:user:edit", "x"),
+            ("sys:user:info", "x"),
+        ]
+    ),
 )
 @api_schema
 def get_user_info(request, user_id: int):

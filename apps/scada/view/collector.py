@@ -115,7 +115,7 @@ def delete_process_config(collector: Collector):
     response=CollectorOut,
     auth=AuthBearer(
         [
-            ("scada:collector:create", "x"),
+            ("scada:collector:add", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),
@@ -197,7 +197,7 @@ def service_discover(request):
     response=list[CollectorOut],
     auth=AuthBearer(
         [
-            ("scada:collector:list", "x"),
+            ("scada:collector:edit", "x"),
             ("scada:site:permit:{site_id}", "r"),
         ]
     ),
@@ -235,7 +235,7 @@ def get_collector_list(request, site_id: int, module_id: int):
     response=CollectorOut,
     auth=AuthBearer(
         [
-            ("scada:collector:update", "x"),
+            ("scada:collector:edit", "x"),
             ("scada:site:permit:{site_id}", "w"),
         ]
     ),
