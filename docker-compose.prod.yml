@@ -41,7 +41,7 @@ services:
       - 9090:9090
     hostname: hetu-tsdb
     env_file:
-      - ${ENV_FILE:-/env/.env}
+      - ${ENV_FILE:-.env}
     command: --enable-feature=promql-at-modifier
       --web.enable-admin-api
       --web.enable-lifecycle
@@ -63,7 +63,7 @@ services:
     ports:
       - 9091:9091
     env_file:
-      - ${ENV_FILE:-/env/.env}
+      - ${ENV_FILE:-.env}
     hostname: hetu-pushgateway
     command: --persistence.interval=15s --persistence.file=/data/persistence.json
     healthcheck:
@@ -81,7 +81,7 @@ services:
     ports:
       - 9093:9093
     env_file:
-      - ${ENV_FILE:-/env/.env}
+      - ${ENV_FILE:-.env}
     hostname: hetu-alertmanager
     command: --config.file=/etc/alertmanager/alertmanager.yml
     healthcheck:
@@ -105,7 +105,7 @@ services:
       - ./deploy/supervisor/supervisord.conf:/etc/supervisor/supervisord.conf
       - ./deploy/supervisor/include:/etc/supervisor/include
     env_file:
-      - ${ENV_FILE:-/env/.env}
+      - ${ENV_FILE:-.env}
     ports:
       - 9001:9001
     networks:
@@ -116,7 +116,7 @@ services:
     tty: true
     restart: "no"
     env_file:
-      - ${ENV_FILE:-/env/.env}
+      - ${ENV_FILE:-.env}
     command:
       - bash
       - -c
@@ -142,7 +142,7 @@ services:
       - ./gunicorn_config.py
       - config.wsgi:application
     env_file:
-      - ${ENV_FILE:-/env/.env}
+      - ${ENV_FILE:-.env}
     ports:
       - 8000:8000
     healthcheck: # 添加健康检查

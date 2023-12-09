@@ -13,12 +13,12 @@ from pathlib import Path
 import environ
 import os
 
+BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
+
 env = environ.Env(
     # set casting, default value
     DEBUG=(bool, False)
 )
-
-BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
@@ -34,7 +34,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 
 # 允许本地和Docker环境
-ALLOWED_HOSTS = ["172.19.225.14", "host.docker.internal", "localhost", "127.0.0.1", "hetu-api"]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
 # 安装的应用列表
 INSTALLED_APPS = [
