@@ -368,6 +368,7 @@ def get_activated_notifies(request, site_id: int):
     auth=AuthBearer(
         [
             ("scada:alert:edit", "x"),
+            ("scada:alert:info", "x"),
         ]
     ),
 )

@@ -1,10 +1,9 @@
-from urllib.parse import urlencode
 
 import requests
 from django.conf import settings
 from django.db.models import Q, F
 from django.shortcuts import get_object_or_404
-from ninja import Query, Router
+from ninja import Form, Query, Router
 from ninja.errors import HttpError
 from prometheus_client import (
     CollectorRegistry,
@@ -15,7 +14,6 @@ from prometheus_client import (
 
 from apps.scada.models import Module, Variable
 from apps.scada.schema.variable import (
-    VariableGroupOut,
     VariableIn,
     VariableOptionOut,
     VariableOut,
@@ -81,7 +79,7 @@ def read_range(
     return out
 
 
-@router.get(
+@router.post(
     "/{site_id}/variable/values",
     response=list[ReadValueOut],
     auth=AuthBearer(
@@ -95,7 +93,7 @@ def read_range(
 def read_values(
     request,
     site_id: int,
-    variable_ids: list[int] = Query(default=[]),
+    variable_ids: list[int] = Form(default=[]),
 ):
     """批量读取变量值"""
 
