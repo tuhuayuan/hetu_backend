@@ -67,6 +67,12 @@ class VariableUpdateIn(Schema):
     details: str
 
 
+class ReadValueIn(Schema):
+    """批量读取请求"""
+
+    variable_ids: list[int] = []
+
+
 class ReadValueOut(Schema):
     """变量值结构体"""
 
