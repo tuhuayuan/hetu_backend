@@ -97,7 +97,6 @@ def read_values(
     payload: ReadValueIn,
 ):
     """批量读取变量值"""
-
     vars = Variable.objects.filter(id__in=payload.variable_ids, module__site_id=site_id)
 
     # 获取给定 variable_ids 下每个 module_id 中的变量列表

@@ -177,11 +177,13 @@ def set_rule(request, site_id: int, payload: RuleIn):
     ),
 )
 @api_paginate
-def get_rule_list(request, site_id: int, rule_name: str = None):
+def get_rule_list(request, site_id: int, variable_id: int = None, rule_name: str = None):
     """获取配置的告警列表"""
 
     rules = Rule.objects.filter(variable__module__site_id=site_id)
-    if rule_name:
+    if variable_id:
+        rules = rules.filter(variable__id=variable_id)
+    elif rule_name:
         rules = rules.filter(name__icontains=rule_name)
 
     return rules
