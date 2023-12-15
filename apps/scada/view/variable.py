@@ -1,4 +1,4 @@
-
+from datetime import datetime, timedelta
 import requests
 from django.conf import settings
 from django.db.models import Q, F
@@ -25,7 +25,11 @@ from apps.scada.schema.variable import (
 )
 from apps.scada.utils.grm.schemas import GrmVariable
 from apps.scada.utils.pool import get_grm_client
-from apps.scada.utils.promql import PrometheusQueryError, query_prometheus
+from apps.scada.utils.promql import (
+    PrometheusQueryError,
+    promql_query,
+    promql_query_range,
+)
 from apps.sys.utils import AuthBearer
 from utils.schema.base import api_schema
 from utils.schema.paginate import api_paginate
@@ -48,33 +52,37 @@ def read_range(
     request,
     site_id: int,
     variable_id: int,
-    offset: str = Query(default=None, regex=r"^\d+[mshd]$"),
-    duration: str = Query(default="1h", regex=r"^\d+[msh]$"),
+    offset: int = None,
+    duration: str = "1h",
+    step: int = 15,
 ):
     var = get_object_or_404(Variable, id=variable_id, module__site_id=site_id)
     query_str = "grm_" + var.module.module_number + "_gauge"
     query_str += '{name="' + var.name + '"}'
-    query_str += f"[{duration}]"
 
-    # 可选的偏移参数
-    if offset:
-        query_str += f" offset {offset}"
+    # 处理 duration 参数
+    units = {"s": "seconds", "m": "minutes", "h": "hours", "d": "days", "w": "weeks"}
+    duration_seconds = int(
+        timedelta(**{units[duration[-1]]: int(duration[:-1])}).total_seconds()
+    )
+
+    # 处理 offset 参数
+    if offset is None:
+        offset = int(datetime.now().timestamp())
 
     try:
-        query_data = query_prometheus(query_str)
+        result = promql_query_range(query_str, offset - duration_seconds, offset, step)
     except PrometheusQueryError as e:
         raise HttpError(500, f"Prometheus Query Error: {e}")
     except requests.RequestException as e:
         raise HttpError(500, f"Request Error: {e}")
 
-    # 格式参考 https://prometheus.io/docs/prometheus/latest/querying/api/#expression-query-result-formats
+    # 格式参考 https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors
     values: list[ReadValueOut.Value] = []
     out = ReadValueOut.from_orm(var)
-    for result in query_data["data"]["result"]:
-        for value_set in result["values"]:
-            values.append(
-                ReadValueOut.Value(timestamp=value_set[0], value=float(value_set[1]))
-            )
+    for ret in result:
+        for v in ret["values"]:
+            values.append(ReadValueOut.Value(timestamp=v[0], value=float(v[1])))
         break
     out.values = values
     return out
@@ -118,7 +126,7 @@ def read_values(
         query_str += '{name=~"' + "|".join([v.name for v in module_vars]) + '"}'
 
         try:
-            query_data = query_prometheus(query_str)
+            query_data = promql_query(query_str)
         except PrometheusQueryError as e:
             raise HttpError(500, f"Prometheus Query Error: {e}")
         except requests.RequestException as e:
@@ -161,7 +169,7 @@ def create_variable(
     module = get_object_or_404(Module, id=module_id, site_id=site_id)
     v = Variable(module_id=module.id, **payload.dict())
     v.save()
-    v.site_id=site_id
+    v.site_id = site_id
     return v
 
 
@@ -246,7 +254,7 @@ def update_variable(
     v.rw = payload.rw
     v.details = payload.details
     v.save()
-    v.site_id =site_id
+    v.site_id = site_id
     return v
 
 

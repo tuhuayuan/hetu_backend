@@ -14,7 +14,7 @@ from apps.scada.schema.site import (
     SiteStatisticOut,
     SiteStatisticValueOut,
 )
-from apps.scada.utils.promql import query_prometheus
+from apps.scada.utils.promql import promql_query
 from apps.sys.utils import AuthBearer, get_enforcer
 from apps.sys.models import User
 from utils.schema.base import api_schema
@@ -325,7 +325,7 @@ def get_statistic_value(
         query_str += '{name="' + v.name + '"}'
 
         try:
-            query_data = query_prometheus(query_str)
+            query_data = promql_query(query_str)
         except Exception:
             continue
 
